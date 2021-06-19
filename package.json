@@ -1,0 +1,23 @@
+{
+  "name": "Sketches",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "svelte-kit dev --host -p 8080",
+    "build": "svelte-kit build",
+    "preview": "svelte-kit preview"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-netlify": "^1.0.0-next.17",
+    "@sveltejs/kit": "next",
+    "sass": "^1.35.1",
+    "svelte": "^3.34.0",
+    "svelte-preprocess": "^4.7.3",
+    "vite-plugin-string": "^1.0.1"
+  },
+  "type": "module",
+  "dependencies": {
+    "gsap": "^3.7.0",
+    "ogl": "0.0.73",
+    "tweakpane": "^3.0.2"
+  }
+}
