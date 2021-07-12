@@ -11,8 +11,9 @@ varying vec3 vTangent;
 varying vec2 vUv;
 varying vec4 vMvPos;
 varying vec3 vPos;
+varying float vTarget;
 
-#define LIGHT vec3(0.0, 10.0, 5.0)
+#define LIGHT vec3(0.0, 5.0, 5.0)
 
 vec2 matcap(vec3 eye, vec3 normal) {
     vec3 reflected = reflect(eye, normal);
@@ -30,38 +31,37 @@ vec3 hash32(vec2 p)
 void main() {
 
     vec3 norm = normalize(vNormal);
-    vec3 eyeDir = normalize(cameraPosition - vPos);
-    vec3 lightDir = normalize(LIGHT - vPos);
-    vec3 halfVec = normalize(eyeDir + lightDir);
     vec3 viewDir = normalize(vMvPos.xyz);
 
     vec3 hash1 = hash32(gl_FragCoord.xy+fract(_Time)*1387.0);
     vec3 hash2 = hash32(gl_FragCoord.yx+fract(_Time)*1721.0);
     vec3 dither = ((hash1) + (hash2-1.0)) / 255.0;
 
-    vec2 matcapCoord = matcap(viewDir, normalize(vNormal));
+    vec2 matcapCoord = matcap(viewDir, norm);
 
-    float matcapLight = texture2D(_MatCap, matcapCoord).x;
+    float matcapLight = texture2D(_MatCap, matcapCoord).y;
+    // matcapLight = matcapLight*matcapLight*matcapLight*matcapLight*matcapLight;
     matcapLight = matcapLight*matcapLight;
-    matcapLight *= 1.0;
+    // matcapLight *= 1.2;
 
-    float specLight = clamp(dot(norm, halfVec), 0.0, 1.0);
-    specLight = pow(specLight, 32.0);
-    float halfLambert = dot(vNormal, normalize(LIGHT))*0.5+0.5;
-    halfLambert = halfLambert*halfLambert*halfLambert;
+    float halfLambert = dot(norm, normalize(LIGHT))*0.5+0.5;
+    // halfLambert = halfLambert*halfLambert;
 
-    float fresnel = (dot(viewDir, norm)*0.5+0.5);
-    fresnel = fresnel*fresnel;
-    fresnel *= 1.2;
-    float totalLight = fresnel + halfLambert;
-    vec3 col = mix(vec3(0.0), norm*0.5+0.5, vec3(halfLambert + fresnel));
+    float fresnel = 1.0-(dot(-viewDir, norm)*0.5+0.5);
+    fresnel = fresnel * fresnel*fresnel*fresnel;
+    fresnel *= 1.0;
 
-    float metal = (matcapLight)*totalLight;
-    float fog = smoothstep(4.5, 3.5, length(vMvPos.xyz));
-    // col = mix(vec3(0.0), norm*0.5+0.5, fog);
-    col = mix(vec3(0.0), vec3(metal), fog);
+    float fog = smoothstep(8.0, 4.0, vMvPos.z*vMvPos.z);
+    // vec3 col = mix(vec3(0.12342, 0.134, 0.9312), vec3(0.95, 0.134, 0.1312), halfLambert);
+    vec3 col = mix(norm * 0.5 + 0.5, vec3(halfLambert), 1.0-fresnel);
+    // col *= halfLambert + matcapLight;
+    // col += matcapLight*.3;
 
-    gl_FragColor = vec4(vec3(metal), 1.0);
+    gl_FragColor = vec4(col, 1.0);
+    // gl_FragColor = vec4(vec3(matcapLight*(halfLambert+fresnel)), 1.0);
+    // gl_FragColor = vec4(vec3(vTarget), 1.0);
+    // gl_FragColor = vec4(vec3(halfLambert), 1.0);
+    //gl_FragColor = vec4(vec3(mix(vec3(0.0), col, halfLambert*halfLambert)), 1.0);
 
 }
 

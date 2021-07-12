@@ -61,6 +61,10 @@ export class Sphere extends Geometry {
                 normal[i * 3 + 1] = n.y;
                 normal[i * 3 + 2] = n.z;
 
+                // const tangentX = -Math.cos((pStart + u * pLength)+halfPI) * Math.sin(tStart + v * tLength);
+                // const tangentY = 0;
+                // const tangentZ = Math.sin((pStart + u * pLength)+halfPI) * Math.sin(tStart + v * tLength);
+
                 const tangentX = -Math.cos((pStart + u * pLength)+halfPI);
                 const tangentY = 0;
                 const tangentZ = Math.sin((pStart + u * pLength)+halfPI);
