@@ -10,9 +10,10 @@ const config = {
 		// hydrate the <div id="svelte"> element in src/app.html
 		target: '#svelte',
 		vite: () => ({
-			plugins: [
-				vitePluginString
-			]
+			ssr: {
+				noExternal: ['ogl'],
+			},
+			plugins: [vitePluginString]
 		})
 	},
 	preprocess: sveltePreprocess()

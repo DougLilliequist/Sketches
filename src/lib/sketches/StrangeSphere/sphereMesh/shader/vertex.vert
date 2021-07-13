@@ -1,4 +1,3 @@
-export const vertex = `
 precision highp float;
 
 attribute vec3 position;
@@ -258,4 +257,3 @@ void main() {
     gl_Position = projectionMatrix * vMvPos;
 
 }
-`

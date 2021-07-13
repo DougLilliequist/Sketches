@@ -21,11 +21,10 @@
 	}
 </script> -->
 
-    
-    <script>
+<script>
     
     import { onMount, tick } from "svelte";
-    import {StrangeSphere} from '$lib/sketches/StrangeSphere/strangeSphere.js';
+    import {StrangeSphere} from '$lib/sketches/strangeSphere/strangeSphere.js';
     //--------------------------------
     
     // export let article;
@@ -74,33 +73,31 @@
         sketch.onresize({width: containerWidth, height: containerHeight})
     }
     
-    </script>
+</script>
 
-    <svelte:window
-    on:resize={handleResize}
-    />
+<svelte:window on:resize={handleResize} />
     
-    <main class="sketch" bind:this={el} bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
-        <canvas class="webgl-canvas" bind:this={canvas}></canvas>
-    </main>
+<main class="sketch" bind:this={el} bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
+    <canvas class="webgl-canvas" bind:this={canvas}></canvas>
+</main>
     
-    <style lang="scss">
+<style lang="scss">
     
-        .sketch {
+    .sketch {
             position: absolute;
             min-width: 100vw;
             min-height: 100vh;
             overflow: hidden;
-        }
+    }
 
-        .webgl-canvas {
-            position: absolute;
+    .webgl-canvas {
+            position: fixed;
             width: 100%;
             height: 100%;
             top: 0;
             left: 0;
             margin: 0;
             border: 0px;
-            }
+    }
     
-    </style>
+</style>

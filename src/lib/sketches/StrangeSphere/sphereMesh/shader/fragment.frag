@@ -1,4 +1,3 @@
-export const fragment = `
 precision highp float;
 
 uniform sampler2D _MatCap;
@@ -64,5 +63,3 @@ void main() {
     //gl_FragColor = vec4(vec3(mix(vec3(0.0), col, halfLambert*halfLambert)), 1.0);
 
 }
-
-`

@@ -1,14 +1,16 @@
 import {Mesh, Program, Texture} from 'ogl';
 import {Sphere} from './sphere.js';
 
-import {vertex} from './shader/vertex.js';
-import {fragment} from './shader/fragment.js';
+import vertex from './shader/vertex.vert?raw';
+import fragment from './shader/fragment.frag?raw';
 
 export class SphereMesh extends Mesh {
 
     constructor(gl) {
 
         super(gl);
+
+        console.log(fragment)
 
         this.gl = gl;
         this.initGeometry();
