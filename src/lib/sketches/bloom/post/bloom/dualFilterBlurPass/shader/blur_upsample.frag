@@ -25,14 +25,6 @@ vec3 hash32(vec2 p)
     return fract((p3.xxy+p3.yzz)*p3.zyx);
 }
 
-vec3 lin2srgb(vec3 c) {
-    return sqrt(c);
-}
-
-vec3 srgb2lin(vec3 c) {
-    return c * c;
-}
-
 void main() {
     
     vec2 texelSize = 1.0 / _Resolution;

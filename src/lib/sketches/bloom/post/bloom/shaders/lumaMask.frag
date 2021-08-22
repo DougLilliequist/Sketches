@@ -22,12 +22,13 @@ float luma(vec4 color) {
 //https://github.com/mrdoob/three.js/blob/342946c8392639028da439b6dc0597e58209c696/examples/js/shaders/LuminosityHighPassShader.js
 void main() {
 
-    vec3 col = texture2D(_ColorPass, vUv).xyz;
+    vec4 col = texture2D(_ColorPass, vUv).xyzw;
+    col.xyz = mix(vec3(0.0), col.xyz, col.w);
 
-    float lumaLevel = luma(col);
-    float alpha = smoothstep( _BrightnessThreshold, _BrightnessThreshold + _SmoothWidth, lumaLevel );
-    vec3 mask = mix(CLEARCOL, col, alpha);
+//    float lumaLevel = luma(col);
+//    float alpha = smoothstep( _BrightnessThreshold, _BrightnessThreshold + _SmoothWidth, lumaLevel );
+//    vec3 mask = mix(CLEARCOL, col, alpha);
 
-    gl_FragColor = vec4(mask, 1.0);
+    gl_FragColor = vec4(col.xyz, 1.0);
 
 }

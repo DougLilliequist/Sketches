@@ -43,12 +43,6 @@ export default class PostProcessing extends Mesh {
 
     }
 
-    initBlurPass() {
-
-        this.blurPass = new DualFilterBlurPass(this.gl, {width: this.gl.canvas.width, height: this.gl.canvas.height});
-
-    }
-
     initBloomPass() {
 
         this.bloomPass = new BloomPass(this.gl);

@@ -14,14 +14,14 @@ export class bloom {
         this.renderer = new Renderer({
             canvas: el,
             width: el.clientWidth,
-            height: el.clientHeight, 
+            height: el.clientHeight,
             antialias: false,
             dpr: 1
         });
 
         this.gl = this.renderer.gl;
         const bg = 0.0;
-        this.gl.clearColor(bg,bg,bg, 0.0);
+        this.gl.clearColor(bg, bg, bg, 0.0);
 
         const {
             clientWidth,
@@ -61,14 +61,14 @@ export class bloom {
     }
 
     render({
-        scene,
-        camera = null,
-        target = null,
-        clear,
-        time = 0
-    }) {
+               scene,
+               camera = null,
+               target = null,
+               clear,
+               time = 0
+           }) {
 
-        if(!this.renderToScreen) {
+        if (!this.renderToScreen) {
             this.post.render({scene, camera, time})
         } else {
             this.renderer.render({
@@ -80,9 +80,9 @@ export class bloom {
     }
 
     update({
-        time,
-        deltaTime
-    }) {
+               time,
+               deltaTime
+           }) {
 
         this.controls.update();
 

@@ -23,9 +23,9 @@ vec3 screenBlend(vec3 a, vec3 b) {
 void main() {
 
     vec3 fxaaPass = texture2D(_FxaaPassOutput, vUv).xyz;
-    vec3 blurPass = texture2D(_BlooomPassOutput, vUv).xyz;
+    vec3 bloomPass = texture2D(_BlooomPassOutput, vUv).xyz;
 
-    vec3 finalCol = screenBlend(fxaaPass, blurPass*3.0);
+    vec3 finalCol = screenBlend(fxaaPass, bloomPass);
 
     vec3 hash1 = hash32(gl_FragCoord.xy+fract(_Time)*1300.0);
     vec3 hash2 = hash32(gl_FragCoord.yx+fract(_Time+0.3123)*1300.0);

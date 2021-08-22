@@ -16,7 +16,7 @@ export default class FxaaPass {
 
     createRenderTarget() {
 
-        this.renderTarget = new RenderTarget(this.gl)
+        return new RenderTarget(this.gl);
 
     }
 
@@ -31,7 +31,7 @@ export default class FxaaPass {
             }
         }
 
-        this.program = new Mesh(this.gl, {
+        this.colorPass = new Mesh(this.gl, {
             geometry: new Triangle(this.gl),
             program: new Program(this.gl, {
                 uniforms,
@@ -43,26 +43,30 @@ export default class FxaaPass {
             })
         });
 
-        //TODO: INCLUDE EMISSIVE PASS HERE
+        this.colorPassTarget = new RenderTarget(this.gl);
 
     }
 
     render({pass}) {
 
-        this.program.program.uniforms.tMap.value = pass;
-        this.gl.renderer.render({scene: this.program, target: this.renderTarget, clear: false});
+        this.colorPass.program.uniforms.tMap.value = pass;
+        this.gl.renderer.render({scene: this.colorPass, target: this.colorPassTarget, clear: false});
 
     }
 
     onResize({width, height}) {
 
-        this.createRenderTarget();
-        this.program.program.uniforms._Resolution.value.set(this.gl.canvas.width, this.gl.canvas.height);
+        this.colorPassTarget = this.createRenderTarget();
+        this.colorPass.program.uniforms._Resolution.value.set(this.gl.canvas.width, this.gl.canvas.height);
 
     }
 
     get Output() {
-        return this.renderTarget.texture;
+        return this.colorPassTarget.texture;
+    }
+
+    get EmissiveMask() {
+        return this.emissivePassTarget.texture;
     }
 
 }

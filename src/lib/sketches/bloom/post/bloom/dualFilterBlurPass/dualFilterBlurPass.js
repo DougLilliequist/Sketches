@@ -8,7 +8,6 @@ import {Texture} from 'ogl';
 import vertex from './shader/vertex.vert?raw'
 import blur_downsample from './shader/blur_downsample.frag?raw'
 import blur_upsample from './shader/blur_upsample.frag?raw'
-import capture from './shader/capture.frag?raw';
 
 
 export default class DualFilterBlurPass {
@@ -23,37 +22,7 @@ export default class DualFilterBlurPass {
         this.resolutionScale = 0.5;
 
         this.setSize({width, height});
-
-        this.initCapturePass();
-
         this.initBlurPasses();
-
-    }
-
-
-    initCapturePass() {
-
-        //TODO: create capture pass so I can get the the FXAA at half resolution
-
-        const uniforms = {
-            _Pass: {
-                value: new Texture(this.gl)
-            }
-        }
-
-        this.captureProgram = new Mesh(this.gl, {
-            geometry: new Triangle(this.gl),
-            program: new Program(this.gl, {
-                uniforms,
-                vertex,
-                fragment: capture,
-                depthTest: false,
-                depthWrite: false,
-                cull: null,
-            })
-        })
-
-        this.captureTarget = this.createCaptureTarget();
 
     }
 
@@ -61,19 +30,19 @@ export default class DualFilterBlurPass {
 
         this.createBlurBuffers();
 
-        const downSamplePassUniforms = {
+        const uniforms = {
 
             _Image: {
                 value: new Texture(this.gl)
             },
             _StepSize: {
-                value: 1.0
+                value: 1
             },
             _Time: {
                 value: 0
             },
             _Resolution: {
-                value: new Vec2(this.width, this.height)
+                value: new Vec2(Math.floor(this.width * this.resolutionScale), Math.floor(this.height * this.resolutionScale))
             },
             _Seed: {
                 value: 0
@@ -85,38 +54,19 @@ export default class DualFilterBlurPass {
             program: new Program(this.gl, {
                 vertex,
                 fragment: blur_downsample,
-                uniforms: downSamplePassUniforms,
+                uniforms,
                 transparent: false,
                 depthTest: false,
                 depthWrite: false
             })
         });
-
-        const upsamplePassUniforms = {
-
-            _Image: {
-                value: new Texture(this.gl)
-            },
-            _StepSize: {
-                value: 1.0
-            },
-            _Time: {
-                value: 0
-            },
-            _Resolution: {
-                value: new Vec2(this.width, this.height)
-            },
-            _Seed: {
-                value: 0
-            }
-        }
 
         this.upsamplePass = new Mesh(this.gl, {
             geometry: new Triangle(this.gl),
             program: new Program(this.gl, {
                 vertex,
                 fragment: blur_upsample,
-                uniforms: upsamplePassUniforms,
+                uniforms,
                 transparent: false,
                 depthTest: false,
                 depthWrite: false
@@ -125,60 +75,44 @@ export default class DualFilterBlurPass {
 
     }
 
-    createCaptureTarget() {
-
-        return new RenderTarget(this.gl, {
-            width: Math.floor(this.width * this.resolutionScale),
-            height: Math.floor(this.height * this.resolutionScale)
-        })
-
-    }
-
     render({pass, time}) {
 
-        let scale = 1.0;
+        for (let i = 0; i < this.blurBuffers.length-1; i++) {
 
-        // this.captureProgram.program.uniforms._Pass.value = pass;
-        // this.gl.renderer.render({scene: this.captureProgram, target: this.captureTarget, clear: false});
-
-        for (let i = 0; i < this.downSamplePasses.length; i++) {
-
-            this.downsamplePass.program.uniforms._Image.value = i === 0 ? pass.texture : this.downSamplePasses[i - 1].texture;
-            this.downsamplePass.program.uniforms._Resolution.value.set(Math.floor(this.width * this.resolutionScale * scale), Math.floor(this.height * this.resolutionScale * scale));
+            if(i === 0) {
+                this.downsamplePass.program.uniforms._Image.value = pass.texture;
+                this.downsamplePass.program.uniforms._Resolution.value.set(pass.width, pass.height);
+            } else {
+                this.downsamplePass.program.uniforms._Image.value = this.blurBuffers[i].buffer.texture;
+                this.downsamplePass.program.uniforms._Resolution.value.copy(this.blurBuffers[i].resolution);
+            }
             this.downsamplePass.program.uniforms._Seed.value = i * 100.0 * Math.random();
             this.downsamplePass.program.uniforms._Time.value = time;
 
-            this.gl.renderer.render({scene: this.downsamplePass, target: this.downSamplePasses[i], clear: false});
-
-            scale *= 0.5;
-
+            this.gl.renderer.render({scene: this.downsamplePass, target: this.blurBuffers[i+1].buffer, clear: false});
         }
 
-        for (let i = 0; i < this.upsamplePasses.length; i++) {
+        for (let i = this.blurBuffers.length-1; i > 0; i--) {
 
-            scale *= 2.0;
-
-            this.upsamplePass.program.uniforms._Image.value = i === 0 ? this.downSamplePasses[this.downSamplePasses.length - 1].texture : this.upsamplePasses[i - 1].texture;
-            this.upsamplePass.program.uniforms._Resolution.value.set(Math.floor(this.width * this.resolutionScale * scale), Math.floor(this.height * this.resolutionScale * scale));
+            this.upsamplePass.program.uniforms._Image.value = this.blurBuffers[i].buffer.texture;
+            this.upsamplePass.program.uniforms._Resolution.value.copy(this.blurBuffers[i].resolution);
             this.upsamplePass.program.uniforms._Time.value = time;
             this.upsamplePass.program.uniforms._Seed.value = i * 100.0 * Math.random();
 
-            this.gl.renderer.render({scene: this.upsamplePass, target: this.upsamplePasses[i], clear: false});
+            this.gl.renderer.render({scene: this.upsamplePass, target: this.blurBuffers[i-1].buffer, clear: false});
 
         }
 
     }
 
-    //TODO: MAKE SURE THAT THE FIRST AND LAST BLUR PASS TEXTURE HAS CAPTURE TARGET'S RESOLUTION
     createBlurBuffers() {
 
-        const passCount = 3;
+        const bufferCount = 4;
 
-        this.downSamplePasses = new Array(passCount);
-        this.upsamplePasses = new Array(passCount);
+        this.blurBuffers = new Array(bufferCount);
 
         let scale = 1.0;
-        for (let i = 0; i < this.downSamplePasses.length; i++) {
+        for (let i = 0; i < this.blurBuffers.length; i++) {
 
             const textureParams = {
                 width: Math.floor(this.width * this.resolutionScale * scale),
@@ -190,37 +124,18 @@ export default class DualFilterBlurPass {
                 depth: false
             }
 
-            this.downSamplePasses[i] = new RenderTarget(this.gl, this.getBlurTextureParams({scale}));
+            this.blurBuffers[i] = {
+                buffer: new RenderTarget(this.gl, textureParams),
+                resolution: new Vec2(textureParams.width, textureParams.height)
+            }
             scale *= 0.5;
 
         }
 
-        for (let i = 0; i < this.upsamplePasses.length; i++) {
-
-            scale *= 2.0;
-
-            this.upsamplePasses[i] = new RenderTarget(this.gl, this.getBlurTextureParams({scale}));
-
-        }
-
-    }
-
-    getBlurTextureParams({scale}) {
-        return {
-            width: Math.floor(this.width * this.resolutionScale * scale),
-            height: Math.floor(this.height * this.resolutionScale * scale),
-            minFilter: this.gl.LINEAR,
-            magFilter: this.gl.LINEAR,
-            format: this.gl.RGB,
-            internalFormat: this.gl.RGB,
-            depth: false
-        }
     }
 
     onResize({width, height}) {
         this.setSize({width, height});
-
-        this.captureTarget = this.createCaptureTarget();
 
         this.createBlurBuffers()
     }
@@ -231,7 +146,7 @@ export default class DualFilterBlurPass {
     }
 
     get Output() {
-        return this.upsamplePasses[this.upsamplePasses.length - 1].texture;
+        return this.blurBuffers[0].buffer.texture;
     }
 
 }

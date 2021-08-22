@@ -30,16 +30,19 @@ vec4 fxaa(sampler2D tex, vec2 uv, vec2 resolution) {
     float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
     dir = min(vec2(8, 8), max(vec2(-8, -8), dir * rcpDirMin)) * pixel;
 
-    vec3 rgbA = 0.5 * (
-    texture2D(tex, uv + dir * (1.0 / 3.0 - 0.5)).rgb +
-    texture2D(tex, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
-    vec3 rgbB = rgbA * 0.5 + 0.25 * (
-    texture2D(tex, uv + dir * -0.5).rgb +
-    texture2D(tex, uv + dir * 0.5).rgb);
-    float lB = dot(rgbB, l);
+
+    //the inclusion of alpha is based on THREE's take on FXAA
+    //https://github.com/assiprinz/threejs-unreal-post/blob/master/js/shaders/FXAAShader.js
+    vec4 rgbA = 0.5 * (
+    texture2D(tex, uv + dir * (1.0 / 3.0 - 0.5)) +
+    texture2D(tex, uv + dir * (2.0 / 3.0 - 0.5)));
+    vec4 rgbB = rgbA * 0.5 + 0.25 * (
+    texture2D(tex, uv + dir * -0.5) +
+    texture2D(tex, uv + dir * 0.5));
+    float lB = dot(rgbB, vec4(l, 0.0));
     return mix(
-    vec4(rgbB, 1),
-    vec4(rgbA, 1),
+    vec4(rgbB),
+    vec4(rgbA),
     max(sign(lB - lMin), 0.0) * max(sign(lB - lMax), 0.0)
     );
 }
