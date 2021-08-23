@@ -46,7 +46,7 @@ export default class KawaseBlurPass {
                 fragment: capture,
                 depthTest: false,
                 depthWrite: false,
-                cull: null,
+                cullFace: null,
             })
         })
 
@@ -101,7 +101,7 @@ export default class KawaseBlurPass {
 
             this.program.program.uniforms._Time.value = time;
             this.program.program.uniforms._Seed.value = i + Math.random() * 1000.0;
-            this.program.program.uniforms._StepSize.value = 0.5 + i;
+            this.program.program.uniforms._StepSize.value = 0.5 + i * 2.0;
 
             this.gl.renderer.render({scene: this.program, target: this.blurBuffers[i+1].buffer, clear: false});
 
@@ -111,7 +111,7 @@ export default class KawaseBlurPass {
 
     createBlurBuffers() {
 
-        const bufferCount = 8;
+        const bufferCount = 9;
 
         this.blurBuffers = new Array(bufferCount);
 

@@ -20,8 +20,8 @@ export class bloom {
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.8;
-        this.gl.clearColor(bg, bg, bg+0.1, 0.0);
+        const bg = 0.0;
+        this.gl.clearColor(bg, bg, bg, 0.0);
 
         const {
             clientWidth,
