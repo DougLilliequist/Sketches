@@ -3,6 +3,8 @@ import {Mesh, Program, RenderTarget, Texture, Triangle, Vec2} from "ogl";
 import vertex from './vertex.vert?raw';
 import fxaa from './fxaa.frag?raw';
 
+
+//TODO: I NEED TO ANTI ALIAS THE ALPHA MASK SEPARATELY
 export default class FxaaPass {
 
     constructor(gl) {
