@@ -5,7 +5,7 @@
     "dev": "svelte-kit dev --host -p 8080",
     "build": "svelte-kit build",
     "init-sketch": "sketchboilerplate.sh",
-    "preview": "svelte-kit preview"
+    "preview": "svelte-kit preview --host -p 8080"
   },
   "devDependencies": {
     "@sveltejs/adapter-netlify": "^1.0.0-next.17",
@@ -19,6 +19,7 @@
   "dependencies": {
     "gsap": "^3.7.0",
     "ogl": "0.0.73",
+    "spotify-web-api-js": "^1.5.1",
     "tweakpane": "^3.0.2"
   }
 }
