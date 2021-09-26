@@ -6,7 +6,7 @@
     import SpotifyAuthentication from "$lib/utils/SpotifyAuthentication.svelte";
     import SpotifyPlayer from "$lib/utils/SpotifyPlayer.svelte";
 
-    import Timbre1DWorker from '$lib/workers/soundScape/timbre1dWorker.js?worker';
+    import TimbreWorker from '$lib/workers/soundScape/timbreWorker.js?worker';
 
     //--------------------------------
 
@@ -24,7 +24,7 @@
     let spotifyPlayer;
     let player;
     let accessToken = null;
-    let timbre1dworker;
+    let timbreWorker;
     let currentAudioFeatures;
     let currentTimbreData;
     let playbackPosition = 0;
@@ -32,13 +32,17 @@
     let currentAudioAnalysisData;
     let currentLoudnessData;
 
+    let timbreDataBars = [];
+
     let audioBar;
 
     //--------------------------------
 
     onMount(async () => {
 
-        initTimbre1DWorker();
+        timbreDataBars = new Array(12);
+
+        inittimbreWorker();
 
         accessToken = localStorage.getItem(ACCESSTOKENKEY);
 
@@ -50,12 +54,11 @@
 
     });
 
-    const initTimbre1DWorker = () => {
+    const inittimbreWorker = () => {
 
-        timbre1dworker = new Timbre1DWorker();
-        timbre1dworker.onmessage = (event) => {
-            console.log(event.data)
-            currentTimbreData = event.data.timbre1DData;
+        timbreWorker = new TimbreWorker();
+        timbreWorker.onmessage = (event) => {
+            currentTimbreData = event.data.timbreData;
             currentLoudnessData = event.data.loudnessData;
         };
 
@@ -76,7 +79,7 @@
 
         trackDuration = audioAnalysisData.track.duration;
         currentAudioFeatures = audioFeatures;
-        timbre1dworker.postMessage(audioAnalysisData);
+        timbreWorker.postMessage(audioAnalysisData);
 
     }
 
@@ -88,19 +91,29 @@
 
     }
 
+
+    //TODO: RESET PITCH OR TIMBRE VECTORS TO 0 WHEN TRACK IS DONE (OR MAKE THE VLAUES REDUCE TO 0 OVER TIME)
+    //TODO: COMPARE PITCH AND TIMBRE OUTPUTS AGAIN. OR SEE HOW BOTH INFOMRATIONS CAN BE COMBINED?
     const handleTick = () => {
         window.requestAnimationFrame(() => handleTick());
 
-        if(spotifyPlayer){
-            spotifyPlayer.getCurrentPlayerState();
+        if (!spotifyPlayer) return;
 
-            // let playbackTime = playbackPosition / 1000.0;
-            let trackPhase = (playbackPosition / 1000.0) / trackDuration;
-            if(currentTimbreData) {
-                let segmentIndex = Math.floor(trackPhase * (currentTimbreData.length - 1))
-                audioBar.style.height = currentTimbreData[segmentIndex] * 2 + 'px';
-            }
+        spotifyPlayer.getCurrentPlayerState();
+
+        // let playbackTime = playbackPosition / 1000.0;
+        let trackPhase = (playbackPosition / 1000.0) / trackDuration;
+        console.log(trackPhase)
+        if (currentTimbreData) {
+            let segmentIndex = Math.floor(trackPhase * (currentTimbreData.length - 1))
+            console.log("SEGMENT INDEX: ", segmentIndex)
+            timbreDataBars.forEach((bar, i) => {
+                // bar.style.height = Math.abs(currentTimbreData[segmentIndex][i]) * 2 + 'px';
+                // bar.style.width = Math.sqrt(currentTimbreData[segmentIndex][i]*currentTimbreData[segmentIndex][i]) + 'px';
+                bar.style.width = currentTimbreData[segmentIndex][i] * currentTimbreData[segmentIndex][i] * 100.0 + 'px';
+            })
         }
+
 
         updateClock();
 
@@ -127,14 +140,17 @@
 <svelte:window on:resize={handleResize}/>
 
 <main class=sketch bind:this={el} bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
-<!--        <canvas class=webgl-canvas bind:this={canvas}></canvas>-->
+    <!--        <canvas class=webgl-canvas bind:this={canvas}></canvas>-->
     <div class="audio-test">
-        <div class="audio-test__bar" bind:this={audioBar}></div>
+        {#each timbreDataBars as dataBar, i}
+            <div class="audio-test__bar" bind:this={timbreDataBars[i]}></div>
+        {/each}
     </div>
     {#if accessToken === null}
         <SpotifyAuthentication on:accessTokenRecieved={handleAccessTokenRecieved}/>
-        {:else}
-        <SpotifyPlayer bind:this={spotifyPlayer} bind:playbackPosition={playbackPosition} on:audioAnalysisComplete={handleAvaiableAudioAnalysisComplete}/>
+    {:else}
+        <SpotifyPlayer bind:this={spotifyPlayer} bind:playbackPosition={playbackPosition}
+                       on:audioAnalysisComplete={handleAvaiableAudioAnalysisComplete}/>
     {/if}
 </main>
 
@@ -145,6 +161,7 @@
     min-width: 100vw;
     min-height: 100vh;
     overflow: hidden;
+    background-color: black;
   }
 
   .webgl-canvas {
@@ -164,18 +181,18 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 9999;
-    width: 100px;
-    height: 100vh;
+    width: 35vw;
+    height: 50vh;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    flex-direction: column;
 
     &__bar {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: cyan;
-      width: 100%;
-      transition: height 0.2s;
-      height: 100px
+      background-color: #ffffff;
+      width: 1px;
+      transition: width 0.2s;
+      height: 1px
     }
 
   }

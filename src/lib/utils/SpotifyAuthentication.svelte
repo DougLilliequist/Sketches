@@ -9,6 +9,8 @@
     const dispatch = createEventDispatcher();
     const stateKey = 'spotify_auth_state';
 
+    //TODO: THERE IS NO PROPER HANDLING FOR WHEN A TOKEN RUNS OUT. CHECK EXAMPLES AGAIN FOR HOW COOKIES / TOKENS ARE HANDLED
+
     onMount(() => {
         getAccessToken();
     })
@@ -108,6 +110,7 @@
     text-align: center;
     color: white;
     font-size: 18px;
+    z-index: 99999;
   }
 
 </style>

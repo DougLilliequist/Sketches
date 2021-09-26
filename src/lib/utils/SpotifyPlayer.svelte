@@ -72,19 +72,18 @@
             // Playback status updates
             player.addListener('player_state_changed', ({track_window}) => {
                 if (track_window === null) return;
-                // const {track_window} = state;
-                if (track_window) {
-                    trackAnalysisAcquired = false;
-                    const {current_track} = track_window;
-                    if (current_track.id) {
 
-                        //don't know why that's the case yet, but I want to prevent
-                        //unnecessary API calls for tracks that are currently found
-                        if(current_track.id === prevTrackID) return;
-                        getAudioAnalysis({id: current_track.id})
-                        prevTrackID = current_track.id;
-                    }
+                trackAnalysisAcquired = false;
+                const {current_track} = track_window;
+                if (current_track.id) {
+
+                    //don't know why that's the case yet, but I want to prevent
+                    //unnecessary API calls for tracks that are currently found
+                    if (current_track.id === prevTrackID) return;
+                    getAudioAnalysis({id: current_track.id})
+                    prevTrackID = current_track.id;
                 }
+
             });
 
             // Ready
@@ -121,7 +120,7 @@
 
     //dispatch and send data to parent component via event dispatcher
     const getAudioAnalysis = ({id}) => {
-        if(trackAnalysisAcquired === false) {
+        if (trackAnalysisAcquired === false) {
             spotifyApi.getAudioFeaturesForTrack(id).then((audioFeatures) => {
                 spotifyApi.getAudioAnalysisForTrack(id).then((audioAnalysisData) => {
 
@@ -136,14 +135,15 @@
         }
     }
 
-    export const  getCurrentPlayerState = () => {
+    export const getCurrentPlayerState = () => {
 
-        if(player && playerReady) {
+        if (player && playerReady) {
 
             player.getCurrentState().then(state => {
 
                 if (!state) {
                     console.error('User is not playing music through the Web Playback SDK');
+                    playbackPosition = 0;
                     return;
                 }
 

@@ -27,6 +27,22 @@ const transformTimbreVectorTo1D = (data) => {
 
 }
 
+const getTimbre = (data) => {
+
+    const {segments} = data;
+    console.log(segments)
+    let timbreData = [];
+
+    segments.forEach((segment, i) => {
+
+        timbreData[i] = segment.pitches;
+
+    })
+
+    return timbreData;
+
+}
+
 const getLoudnessPerBeat = (data) => {
 
     const {segments} = data;
@@ -44,9 +60,10 @@ const getLoudnessPerBeat = (data) => {
 
 onmessage = (event) => {
 
+    const timbreData = getTimbre(event.data)
     const timbre1DData = transformTimbreVectorTo1D(event.data)
     const loudnessData = getLoudnessPerBeat(event.data);
 
-    postMessage({timbre1DData, loudnessData});
+    postMessage({timbreData, timbre1DData, loudnessData});
 
 }

@@ -1,2 +1,8 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<h1>Sketches</h1>
+<ul>
+    <li><a href="/strangeSphere">Strange Sphere</a><li>
+    <li><a href="/wandering">Wandering</a><li>
+    <li><a href="/bloom">Bloom</a><li>
+    <li><a href="/soundScape">Sound Scape</a><li>
+    <li><a href="/alienConstruct">Alien Construct</a><li>
+</ul>
