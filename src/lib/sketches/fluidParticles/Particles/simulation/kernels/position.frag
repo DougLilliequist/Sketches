@@ -33,7 +33,9 @@ void main() {
 
     vec3 vel = texture2D(_Velocity, flowmapCoord).xyz;
 //    pos.xyz += vel * 3.0;
-    pos.xyz += (vel * vec3(3.0, 3.0, 1.0)) /mix(0.5, 5.0, params.y);
+//    pos.xyz += (vel * vec3(10.0, 10.0, 2.0)) /mix(0.5, 5.0, params.y);
+//    pos.xyz += (vel * vec3(0.005, 0.005, 0.002))  /mix(0.5, 5.0, params.y);
+    pos.xyz += (vel * vec3(0.005, 0.005, 0.002))  /mix(1.0, 5.0, params.y);
 
 
     float lifeRate = params.x;

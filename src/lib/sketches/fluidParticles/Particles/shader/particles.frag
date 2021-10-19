@@ -10,7 +10,7 @@ varying float vLife;
 varying vec3 vWorldPos;
 varying float vShadow;
 
-#define LIGHT vec3(0.0, 5.0, 10.0)
+#define LIGHT vec3(0.0, 10.0, 10.0)
 
 void main() {
 

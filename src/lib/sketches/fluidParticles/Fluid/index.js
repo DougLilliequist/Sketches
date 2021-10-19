@@ -56,44 +56,12 @@ export default class Fluid {
         this.force = 0;
         this.texelSize = new Vec2(1.0 / this.simRes);
 
-        // this.simParams = {
-
-        //     iterations: 4,
-        //     densityDissipation: 0.97,
-        //     velocityDissipation: 0.98,
-        //     pressureDissipation: 0.99,
-        //     curlStrength: 0.1,
-        //     radius: 0.2
-
-        // }
-
-        //very gooey!
-        // this.simParams = {
-        //
-        //     iterations: 8,
-        //     densityDissipation: 0.94,
-        //     velocityDissipation: 0.98,
-        //     pressureDissipation: 0.5,
-        //     curlStrength: 0.01,
-        //     radius: 0.5
-        //
-        // }
-
-        // this.simParams = {
-        //
-        //     iterations: 8,
-        //         densityDissipation: 0.999,
-        //         velocityDissipation: 0.98,
-        //         pressureDissipation: 0.001,
-        //     curlStrength: 1.0,
-        //     radius: 0.1
-        //
-        // }
         this.simParams = {
 
-            iterations: 20,
-            densityDissipation: 0.99,
-            velocityDissipation: 0.99,
+            // iterations: 20,
+            iterations: 10,
+            densityDissipation: 0.97,
+            velocityDissipation: 0.97,
             pressureDissipation: 0.97,
             curlStrength: 0.2,
             radius: 0.2
@@ -182,18 +150,15 @@ export default class Fluid {
             depth: false
         });
 
-        // const triangle = new Geometry(this.gl, {
-        //
-        //     position: {
-        //         size: 2,
-        //         data: new Float32Array([-1, -1, 3, -1, -1, 3])
-        //     },
-        //     uv: {
-        //         size: 2,
-        //         data: new Float32Array([0, 0, 2, 0, 0, 2])
-        //     }
-        //
-        // });
+        this.velocityFieldFBO = this.createPingPongBuffer({
+            width: this.dyeRes,
+            height: this.dyeRes,
+            type: halfFloat,
+            format: rgba?.format,
+            internalFormat: rgba?.internalFormat,
+            minFilter: filtering,
+            depth: false
+        });
 
         const triangle = new Geometry(this.gl, {
             position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) },
@@ -415,6 +380,9 @@ export default class Fluid {
         });
 
         const velocityFieldUniforms = {
+            tMap: {
+                value: this.velocityFieldFBO.read.texture
+            },
             texelSize: {
                 value: new Vec2().copy(this.texelSize)
             },
@@ -451,12 +419,7 @@ export default class Fluid {
         this.splatProgram.program.uniforms.aspectRatio.value = this.gl.renderer.width / this.gl.renderer.height;
         this.splatProgram.program.uniforms.color.value = flowVectorTexture;
         this.splatProgram.program.uniforms.point.value.set(userInput.posX, userInput.posY);
-        this.splatProgram.program.uniforms.radius.value = 0.3/100.0
-
-        // let scale = 1000;
-        let scale = 5;
-
-        let inputVelMag = Math.sqrt((userInput.deltaX*userInput.deltaX)+(userInput.deltaY*userInput.deltaY));
+        this.splatProgram.program.uniforms.radius.value = 0.15/100.0
 
         this.splatProgram.program.uniforms.inputVelocity.value.set(userInput.deltaX, userInput.deltaY, 0.0);
 
@@ -595,22 +558,32 @@ export default class Fluid {
 
         this.gl.renderer.autoClear = true;
 
+        this.velocityFieldProgram.program.uniforms.tMap.value = this.velocityFieldFBO.read.texture;
         this.velocityFieldProgram.program.uniforms.dyeTexelSize.value.set(1 / this.dyeRes);
         this.velocityFieldProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
         this.velocityFieldProgram.program.uniforms.dissipation.value = this.simParams.densityDissipation;
+        // this.gl.renderer.render({
+        //     scene: this.velocityFieldProgram,
+        //     target: this.velocityFieldTarget,
+        //     sort: false,
+        //     update: false
+        // });
 
         this.gl.renderer.render({
             scene: this.velocityFieldProgram,
-            target: this.velocityFieldTarget,
+            target: this.velocityFieldFBO.write,
             sort: false,
             update: false
         });
+
+        this.velocityFieldFBO.swap();
 
     }
 
     get FluidOutput() {
         // return this.densityFBO.read.texture
-        return this.velocityFieldTarget.texture
+        // return this.velocityFieldTarget.texture
+        return this.velocityFieldFBO.read.texture;
     }
 
     createPingPongBuffer({
