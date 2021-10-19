@@ -8,7 +8,7 @@ export default class AlienConstructMesh extends Mesh {
         super(gl);
 
         this.gl = gl;
-        this.resolution = 13;
+        this.resolution = 8;
         this.initGeometry();
         this.initProgram();
 
@@ -47,6 +47,9 @@ export default class AlienConstructMesh extends Mesh {
             let posY = Math.sin(phase * tau);
             let posZ = 0.0;
 
+            console.log("POS X", posX)
+            console.log("POS Y", posY)
+
             normalAxis.set(posX, posY, posZ).normalize();
             tangentAxis.set(-posY, posX, posZ).normalize();
             biNormalAxis.copy(tangentAxis).cross(normalAxis).normalize();
@@ -67,8 +70,8 @@ export default class AlienConstructMesh extends Mesh {
             tangentAxisData[tangentAxisDataIterator++] = tangentAxis.y;
             tangentAxisData[tangentAxisDataIterator++] = tangentAxis.z;
 
-            paramsData[paramsDataIterator++] = phase;
-            paramsData[paramsDataIterator++] = 0.0;
+            paramsData[paramsDataIterator++] = i / (this.resolution);
+            paramsData[paramsDataIterator++] = i / (this.resolution);
             paramsData[paramsDataIterator++] = 0.0;
 
         }

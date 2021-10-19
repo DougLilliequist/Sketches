@@ -1,5 +1,6 @@
 import {Renderer, Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
 import AlienConstructMesh from "$lib/sketches/alienConstruct/alienConstructMesh/AlienConstructMesh";
+import Stats from 'stats-js';
 
 export class alienConstruct {
     constructor({el}) {
@@ -21,6 +22,9 @@ export class alienConstruct {
         this.gl = this.renderer.gl;
         const bg = 0.93;
         this.gl.clearColor(bg,bg,bg, 1.0);
+
+        this.stats = new Stats();
+        document.body.appendChild(this.stats.dom);
 
         const {
             clientWidth,
@@ -66,7 +70,7 @@ export class alienConstruct {
         time,
         deltaTime
     }) {
-
+        this.stats.begin();
         this.controls.update();
 
         this.alienConstructMesh.update({dt: deltaTime})
@@ -76,6 +80,8 @@ export class alienConstruct {
             camera: this.camera,
             clear: true
         });
+
+        this.stats.end();
 
     }
 
