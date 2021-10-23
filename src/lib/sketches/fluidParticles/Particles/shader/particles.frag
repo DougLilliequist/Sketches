@@ -1,6 +1,7 @@
 precision highp float;
 
 uniform sampler2D _Normal;
+uniform sampler2D _FlowMap;
 
 uniform mat3 normalMatrix;
 
@@ -9,6 +10,7 @@ varying vec3 vNormal;
 varying float vLife;
 varying vec3 vWorldPos;
 varying float vShadow;
+varying vec2 vClipPos;
 
 #define LIGHT vec3(0.0, 10.0, 10.0)
 
@@ -25,6 +27,8 @@ void main() {
     col = mix(mix(col + vec3(0.3, 0.0, 0.0), col + vec3(0.0, 0.0, 0.8), vLife), col, vLife); //subtle doppler effect
     col *= light * 2.0;
     col *= mix(0.4, 1.0, vShadow);
+
+    vec3 vel = texture2D(_FlowMap, vClipPos).xyz;
 
     gl_FragColor = vec4(col, 1.0);
 

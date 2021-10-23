@@ -4,8 +4,11 @@ attribute vec3 position;
 attribute vec3 worldPosition;
 attribute vec2 uv;
 
+uniform sampler2D _FlowMap;
+
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
+uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
 uniform mat4 shadowProjectionMatrix;
@@ -27,6 +30,7 @@ varying float vLife;
 varying vec3 vWorldPos;
 varying float vVelocity;
 varying float vShadow;
+varying vec2 vClipPos;
 
 #define SCALE 0.025
 
@@ -74,7 +78,12 @@ void main() {
 
     vec4 worldPos = texture2D(_Position, worldPosition.xy);
 
-    float scalePhase = (worldPos.w * 4.0 * (1.0 - worldPos.w));
+    vec4 clipPos = projectionMatrix * viewMatrix * vec4(worldPos.xyz, 1.0);
+    clipPos /= clipPos.w;
+    vClipPos = clipPos.xy * 0.5 + 0.5;
+    vec3 vel = texture2D(_FlowMap, vClipPos).xyz;
+
+    float scalePhase = (worldPos.w * 4.0 * (1.0 - worldPos.w)) ;
 
     vec4 modelViewPos = modelViewMatrix * vec4(worldPos.xyz, 1.0);
     modelViewPos.xy += position.xy * SCALE * scalePhase;
@@ -91,3 +100,4 @@ void main() {
 
 
 }
+

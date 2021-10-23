@@ -11,7 +11,7 @@ precision highp sampler2D;
     void main () {
         vec2 p = vUv - point.xy;
         p.x *= aspectRatio;
-        vec3 splat = exp(-dot(p, p) / radius) * inputVelocity; //replace this with optical flow
+        vec3 splat = exp(-dot(p, p) / radius) * inputVelocity;
         //vec3 splat = texture2D(color, vUv).xyz;
         vec3 base = texture2D(uTarget, vUv).xyz;
         gl_FragColor = vec4(base + splat, 1.0);

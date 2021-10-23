@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
     precision mediump sampler2D;
     varying highp vec2 vUv;
     uniform sampler2D uTexture;

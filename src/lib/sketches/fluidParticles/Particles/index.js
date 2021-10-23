@@ -7,6 +7,7 @@ import {Shadow} from 'ogl';
 import Simulator from './simulation/index.js';
 import { Camera } from 'ogl';
 import { Vec2 } from 'ogl';
+import {Box} from 'ogl';
 // import { params } from '../params';
 
 import vertex from './shader/particles.vert?raw';
@@ -52,6 +53,7 @@ export default class Particles extends Mesh {
 
         const scale = 0.003;
         const refGeometry = new Plane(this.gl, {width: 1.0, height: 1.0});
+        // const refGeometry = new Box(this.gl);
         const {position, normal, uv, index} = refGeometry.attributes;
 
         const localPositionData = position.data;
@@ -97,6 +99,9 @@ export default class Particles extends Mesh {
             _Velocity: {
                 value: new Texture(this.gl)
             },
+            _PrevPos: {
+                value: this.simulator.PositionPrev
+            },
             _Resolution: {
                 value: new Vec2(this.gl.renderer.width, this.gl.renderer.height)
             },
@@ -107,13 +112,16 @@ export default class Particles extends Mesh {
                 value: 1.0 / 16.0
             },
             _Bias: {
-                value: 0.005
+                value: 1.0/2048
             },
             _Normal: {
                 value: normal
             },
             _Bounds: {
                 value: new Vec2(this.viewportWidth, this.viewportHeight)
+            },
+            _FlowMap: {
+                value: new Texture(this.gl)
             }
 
         }
@@ -160,7 +168,10 @@ export default class Particles extends Mesh {
         this.shadowPass.render({scene});
 
         this.program.uniforms._Position = this.simulator.Position;
-        this.program.uniforms._Velocity.value = flowMap;
+        this.program.uniforms._PrevPos.value = this.simulator.PositionPrev;
+        this.program.uniforms._FlowMap.value = flowMap;
+
+        this.program.uniforms._Velocity.value = this.simulator.velocity.fbo.read.texture;
 
         this.program.uniforms._Bias.value = 0.005;
 

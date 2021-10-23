@@ -59,12 +59,12 @@ export default class Fluid {
         this.simParams = {
 
             // iterations: 20,
-            iterations: 10,
+            iterations: 5,
             densityDissipation: 0.97,
-            velocityDissipation: 0.97,
+            velocityDissipation: 1.0,
             pressureDissipation: 0.97,
-            curlStrength: 0.2,
-            radius: 0.2
+            curlStrength: .5,
+            radius: 0.3
 
         }
 
@@ -74,7 +74,7 @@ export default class Fluid {
 
         // Get supported formats and types for FBOs
         let supportLinearFiltering = this.gl.renderer.extensions[`OES_texture_${this.gl.renderer.isWebgl2 ? `` : `half_`}float_linear`];
-        const halfFloat = this.gl.renderer.isWebgl2 ? this.gl.HALF_FLOAT : this.gl.renderer.extensions['OES_texture_half_float'].HALF_FLOAT_OES;
+        const halfFloat = this.gl.renderer.isWebgl2 ? this.gl.FLOAT : this.gl.renderer.extensions['OES_texture_half_float'].HALF_FLOAT_OES;
         const filtering = supportLinearFiltering ? this.gl.LINEAR : this.gl.NEAREST;
 
         let rgba, rg, r;
@@ -383,6 +383,9 @@ export default class Fluid {
             tMap: {
                 value: this.velocityFieldFBO.read.texture
             },
+            uSource: {
+                value: null
+            },
             texelSize: {
                 value: new Vec2().copy(this.texelSize)
             },
@@ -419,7 +422,7 @@ export default class Fluid {
         this.splatProgram.program.uniforms.aspectRatio.value = this.gl.renderer.width / this.gl.renderer.height;
         this.splatProgram.program.uniforms.color.value = flowVectorTexture;
         this.splatProgram.program.uniforms.point.value.set(userInput.posX, userInput.posY);
-        this.splatProgram.program.uniforms.radius.value = 0.15/100.0
+        this.splatProgram.program.uniforms.radius.value = this.simParams.radius/100.0
 
         this.splatProgram.program.uniforms.inputVelocity.value.set(userInput.deltaX, userInput.deltaY, 0.0);
 
@@ -433,6 +436,8 @@ export default class Fluid {
         this.velocityFBO.swap();
 
         this.splatProgram.program.uniforms.uTarget.value = this.densityFBO.read.texture;
+        this.splatProgram.program.uniforms.inputVelocity.value.set(userInput.deltaX, userInput.deltaY, 0.0);
+
         this.gl.renderer.render({
             scene: this.splatProgram,
             target: this.densityFBO.write,
@@ -457,26 +462,26 @@ export default class Fluid {
         //     userInput
         // });
 
-        this.curlProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
-
-        this.gl.renderer.render({
-            scene: this.curlProgram,
-            target: this.curl,
-            sort: false,
-            update: false
-        });
-
-        this.vorticityProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
-        this.vorticityProgram.program.uniforms.uCurl.value = this.curl.texture;
-
-        this.gl.renderer.render({
-            scene: this.vorticityProgram,
-            target: this.velocityFBO.write,
-            sort: false,
-            update: false
-        });
-
-        this.velocityFBO.swap();
+        // this.curlProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
+        //
+        // this.gl.renderer.render({
+        //     scene: this.curlProgram,
+        //     target: this.curl,
+        //     sort: false,
+        //     update: false
+        // });
+        //
+        // this.vorticityProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
+        // this.vorticityProgram.program.uniforms.uCurl.value = this.curl.texture;
+        //
+        // this.gl.renderer.render({
+        //     scene: this.vorticityProgram,
+        //     target: this.velocityFBO.write,
+        //     sort: false,
+        //     update: false
+        // });
+        //
+        // this.velocityFBO.swap();
 
         this.divergenceProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
 
@@ -487,17 +492,17 @@ export default class Fluid {
             update: false
         });
 
-        this.clearProgram.program.uniforms.uTexture.value = this.pressureFBO.read.texture;
-        this.clearProgram.program.uniforms.value.value = this.simParams.pressureDissipation;
-
-        this.gl.renderer.render({
-            scene: this.clearProgram,
-            target: this.pressureFBO.write,
-            sort: false,
-            update: false
-        });
-
-        this.pressureFBO.swap();
+        // this.clearProgram.program.uniforms.uTexture.value = this.pressureFBO.read.texture;
+        // this.clearProgram.program.uniforms.value.value = this.simParams.pressureDissipation;
+        //
+        // this.gl.renderer.render({
+        //     scene: this.clearProgram,
+        //     target: this.pressureFBO.write,
+        //     sort: false,
+        //     update: false
+        // });
+        //
+        // this.pressureFBO.swap();
 
         this.pressureProgram.program.uniforms.uDivergence.value = this.divergence.texture;
 
@@ -528,6 +533,7 @@ export default class Fluid {
 
         this.velocityFBO.swap();
 
+
         this.advectionProgram.program.uniforms.dyeTexelSize.value.set(1 / this.simRes);
         this.advectionProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
         this.advectionProgram.program.uniforms.uSource.value = this.velocityFBO.read.texture;
@@ -542,32 +548,11 @@ export default class Fluid {
 
         this.velocityFBO.swap();
 
-        this.advectionProgram.program.uniforms.dyeTexelSize.value.set(1 / this.dyeRes);
-        this.advectionProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
-        this.advectionProgram.program.uniforms.uSource.value = this.densityFBO.read.texture;
-        this.advectionProgram.program.uniforms.dissipation.value = this.simParams.densityDissipation;
-
-        this.gl.renderer.render({
-            scene: this.advectionProgram,
-            target: this.densityFBO.write,
-            sort: false,
-            update: false
-        });
-
-        this.densityFBO.swap();
-
-        this.gl.renderer.autoClear = true;
-
         this.velocityFieldProgram.program.uniforms.tMap.value = this.velocityFieldFBO.read.texture;
         this.velocityFieldProgram.program.uniforms.dyeTexelSize.value.set(1 / this.dyeRes);
         this.velocityFieldProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
         this.velocityFieldProgram.program.uniforms.dissipation.value = this.simParams.densityDissipation;
-        // this.gl.renderer.render({
-        //     scene: this.velocityFieldProgram,
-        //     target: this.velocityFieldTarget,
-        //     sort: false,
-        //     update: false
-        // });
+        this.velocityFieldProgram.program.uniforms.uSource.value = this.densityFBO.read.texture;
 
         this.gl.renderer.render({
             scene: this.velocityFieldProgram,
@@ -577,6 +562,23 @@ export default class Fluid {
         });
 
         this.velocityFieldFBO.swap();
+
+
+        // this.advectionProgram.program.uniforms.dyeTexelSize.value.set(1 / this.dyeRes);
+        // this.advectionProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
+        // this.advectionProgram.program.uniforms.uSource.value = this.densityFBO.read.texture;
+        // this.advectionProgram.program.uniforms.dissipation.value = this.simParams.densityDissipation;
+        //
+        // this.gl.renderer.render({
+        //     scene: this.advectionProgram,
+        //     target: this.densityFBO.write,
+        //     sort: false,
+        //     update: false
+        // });
+        //
+        // this.densityFBO.swap();
+
+        this.gl.renderer.autoClear = true;
 
     }
 

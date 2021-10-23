@@ -4,6 +4,8 @@ import { Vec2 } from 'ogl';
 import { Mat4 } from 'ogl';
 
 import positionKernel from './kernels/position.frag?raw';
+import velocityKernel from './kernels/velocity.frag?raw';
+import prevPositionKernel from './kernels/PrevPosiiton.frag?raw';
 
 export default class Simulator {
 
@@ -22,6 +24,7 @@ export default class Simulator {
 
         this.calcViewportDimensions();
         this.initEvents();
+        this.initVelocity();
         this.initPosition();
         this.onResize();
 
@@ -32,11 +35,71 @@ export default class Simulator {
         const dist = this.camera.position.z;
         this.viewportHeight = Math.tan((this.camera.fov * (Math.PI / 180.0)) * 0.5) * dist;
         this.viewportWidth = this.viewportHeight * this.camera.aspect;
+        // this.viewportWidth = this.viewportHeight * 1.0;
     }
 
     initEvents() {
 
         window.addEventListener('resize', this.onResize);
+
+    }
+
+    initVelocity() {
+
+        const initVelocityData = new Float32Array(this.countX * this.countY * 4);
+
+        const paramsData = new Float32Array(this.countX * this.countY * 4.0);
+        let paramsDataIterator = 0;
+        for(let i = 0; i < this.countX * this.countY; i++) {
+
+            paramsData[paramsDataIterator++] = Math.random();
+            paramsData[paramsDataIterator++] = Math.random();
+            paramsData[paramsDataIterator++] = Math.random();
+            paramsData[paramsDataIterator++] = Math.random();
+
+        }
+
+        const paramsTexture = this.createDataTexture({data: paramsData, size: this.countX});
+
+        this.velocity = new GPGPU(this.gl, {data: initVelocityData});
+
+        const uniforms = {
+            _Aspect: {
+                value: (this.gl.renderer.width / this.gl.renderer.height)
+            },
+            _Fluid: {
+                value: new Texture(this.gl)
+            },
+            _Position: {
+                value: new Texture(this.gl)
+            },
+            _Params: {
+                value: paramsTexture
+            },
+            _Bounds: {
+                value: new Vec2(this.viewportWidth, this.viewportHeight)
+            },
+            _Seed: {
+                value: 0
+            },
+            _Resolution: {
+                value: new Vec2(this.gl.canvas.width, this.gl.canvas.height)
+            },
+            _ViewMatrix: {
+                value: new Mat4()
+            },
+            _ProjectionMatrix: {
+                value: new Mat4()
+            },
+            _ViewProjectionMatrix: {
+                value: this.viewProjectionMatrix
+            }
+        }
+
+        this.velocity.addPass({
+            fragment: velocityKernel,
+            uniforms
+        });
 
     }
 
@@ -78,7 +141,7 @@ export default class Simulator {
 
         const uniforms = {
             _Aspect: {
-                value: (this.gl.renderer.width / this.gl.renderer.height) / (640.0 / 480.0)
+                value: (this.gl.renderer.width / this.gl.renderer.height)
             },
             _Velocity: {
                 value: new Texture(this.gl)
@@ -94,6 +157,18 @@ export default class Simulator {
             },
             _Resolution: {
                 value: new Vec2(this.gl.canvas.width, this.gl.canvas.height)
+            },
+            _ViewMatrix: {
+                value: new Mat4()
+            },
+            _ProjectionMatrix: {
+                value: new Mat4()
+            },
+            _ViewProjectionMatrix: {
+                value: this.viewProjectionMatrix
+            },
+            _Dt: {
+                value: 0.016
             }
         }
 
@@ -102,19 +177,42 @@ export default class Simulator {
             uniforms
         });
 
+        this.position.render();
+
+    }
+
+    updateVelocity({flowMap, t}) {
+        this.velocity.passes[0].program.uniforms._Fluid.value = flowMap;
+        this.velocity.passes[0].program.uniforms._Position = this.position.uniform;
+        this.velocity.render();
+
     }
 
     updatePosition({flowMap, t}) {
 
-        this.position.passes[0].program.uniforms._Velocity.value = flowMap;
+        this.position.passes[0].program.uniforms._Velocity = this.velocity.uniform;
+        // this.position.passes[0].program.uniforms._Velocity.value = flowMap;
         this.position.passes[0].program.uniforms._Seed.value += t;
+        this.position.passes[0].program.uniforms._Dt.value = t;
+        this.position.passes[0].program.uniforms._ViewMatrix.value.copy(this.camera.viewMatrix);
+        this.position.passes[0].program.uniforms._ProjectionMatrix.value.copy(this.camera.projectionMatrix);
+
         this.position.render();
+
     }
 
     update({flowMap, worldMatrix, t}) {
 
+        this.modelViewMatrix.multiply(this.camera.viewMatrix, worldMatrix);
+        this.viewProjectionMatrix.multiply(this.camera.projectionMatrix, this.modelViewMatrix);
+
+        this.updateVelocity({flowMap, t});
         this.updatePosition({flowMap, t});
 
+    }
+
+    get PositionPrev() {
+        return this.position.fbo.write.texture;
     }
 
     get Position() {
@@ -142,8 +240,11 @@ export default class Simulator {
 
     onResize = () => {
 
-        const aspect = (this.gl.renderer.width / this.gl.renderer.height) / (640.0 / 480.0);
+        const aspect = (this.gl.renderer.width / this.gl.renderer.height);
         this.position.passes[0].program.uniforms._Aspect.value = aspect;
+
+        this.camera.updateMatrixWorld();
+
 
         this.calcViewportDimensions();
         this.position.passes[0].program.uniforms._Bounds.value.set(this.viewportWidth, this.viewportHeight);

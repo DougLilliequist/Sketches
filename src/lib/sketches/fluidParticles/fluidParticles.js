@@ -8,7 +8,7 @@ export class fluidParticles {
     constructor({el}) {
 
         this.init({el});
-        this.initVideo();
+        // this.initVideo();
         this.initOpticalFlow();
         this.initFluidSim();
         this.initParticles();
