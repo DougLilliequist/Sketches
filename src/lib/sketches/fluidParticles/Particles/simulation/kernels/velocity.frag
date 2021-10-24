@@ -34,9 +34,10 @@ void main() {
 
     //get normalized position under the assumption that the plane is at origin
     vec2 flowmapCoord = (pos.xy / _Bounds) * 0.5 + 0.5;
-    vec3 fluidVel = texture2D(_Fluid,flowmapCoord).xyz;
-//    fluidVel =    (fluidVel * vec3(0.05, 0.05, 0.035))  /mix(1.0, 5.0, params.y);
-    fluidVel =    (fluidVel * vec3(0.01, 0.01, 0.005))  /mix(1.0, 5.0, params.y);
+    vec3 fluidVel = texture2D(_Fluid,clipPos.xy).xyz;
+//    fluidVel =    (fluidVel * vec3(0.05, 0.05, 0.035)) * mix(1.0, 0.05, params.y);
+//    fluidVel =    (fluidVel * vec3(0.08, 0.08, 0.035)) * mix(1.0, 0.05, params.y);
+    fluidVel =    (fluidVel * vec3(0.1, 0.1, 0.035)) * mix(1.0, 0.05, params.y);
 
     vec3 vel = texture2D(tMap, vUv).xyz;
 

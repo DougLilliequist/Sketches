@@ -85,6 +85,9 @@ uniform mat4 _ViewProjectionMatrix;
 
 varying vec2 vUv;
 
+#define PI 3.14159265359
+#define TAU 3.14159265359 * 2.0
+
 vec2 hash22(vec2 p)
 {
     vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
@@ -111,13 +114,17 @@ void main() {
         life = 1.0;
         //generate random position
         vec2 hash = hash22(vec2(gl_FragCoord.xy * 100.0 + _Seed));
-        pos.x = mix(-_Bounds.x, _Bounds.x, hash.x);
-        pos.y = mix(-_Bounds.y, _Bounds.y, hash.y);
+//        pos.x = mix(-_Bounds.x, _Bounds.x, hash.x);
+//        pos.y = mix(-_Bounds.y, _Bounds.y, hash.y);
+        float x = cos(hash.x * TAU) * hash.y;
+        float y = sin(hash.x * TAU) * hash.y;
+        pos.x = x * _Bounds.y * 0.7;
+        pos.y = y * _Bounds.y * 0.7;
         pos.z = 0.0;
 
     }
 
-    life -= mix(0.01, 0.05, lifeRate);
+    life -= mix(0.01, 0.02, lifeRate);
 
     gl_FragColor = vec4(pos.xyz, life);
 

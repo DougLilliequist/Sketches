@@ -12,7 +12,7 @@ varying vec3 vWorldPos;
 varying float vShadow;
 varying vec2 vClipPos;
 
-#define LIGHT vec3(0.0, 10.0, 10.0)
+#define LIGHT vec3(0.0, 10.0, 5.0)
 
 void main() {
 
@@ -26,9 +26,7 @@ void main() {
     vec3 col = vec3(0.61, 0.8, 0.98);
     col = mix(mix(col + vec3(0.3, 0.0, 0.0), col + vec3(0.0, 0.0, 0.8), vLife), col, vLife); //subtle doppler effect
     col *= light * 2.0;
-    col *= mix(0.4, 1.0, vShadow);
-
-    vec3 vel = texture2D(_FlowMap, vClipPos).xyz;
+    col *= mix(0.6, 1.0, vShadow);
 
     gl_FragColor = vec4(col, 1.0);
 

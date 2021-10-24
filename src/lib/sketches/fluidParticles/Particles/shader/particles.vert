@@ -32,6 +32,7 @@ varying float vVelocity;
 varying float vShadow;
 varying vec2 vClipPos;
 
+//#define SCALE 0.025
 #define SCALE 0.025
 
 float unpackRGBA (vec4 v) {
@@ -77,11 +78,6 @@ void main() {
 
 
     vec4 worldPos = texture2D(_Position, worldPosition.xy);
-
-    vec4 clipPos = projectionMatrix * viewMatrix * vec4(worldPos.xyz, 1.0);
-    clipPos /= clipPos.w;
-    vClipPos = clipPos.xy * 0.5 + 0.5;
-    vec3 vel = texture2D(_FlowMap, vClipPos).xyz;
 
     float scalePhase = (worldPos.w * 4.0 * (1.0 - worldPos.w)) ;
 

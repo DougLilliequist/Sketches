@@ -26,7 +26,7 @@ void main() {
     float scalePhase = (worldPos.w * 4.0 * (1.0 - worldPos.w));
 
     vec4 modelViewPos = modelViewMatrix * vec4(worldPos.xyz, 1.0);
-    modelViewPos.xy += position.xy * SCALE;
+    modelViewPos.xy += position.xy * SCALE * scalePhase;
 
     gl_Position = projectionMatrix * modelViewPos;
 

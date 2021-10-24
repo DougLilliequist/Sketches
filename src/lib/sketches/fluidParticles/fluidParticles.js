@@ -26,8 +26,8 @@ export class fluidParticles {
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.93;
-        this.gl.clearColor(bg,bg,bg, 1.0);
+        this.bgCol = 0.9;
+        this.gl.clearColor(this.bgCol,this.bgCol,this.bgCol, 1.0);
 
         const {
             clientWidth,
@@ -140,6 +140,8 @@ export class fluidParticles {
             flowVectorTexture: this.flow.flowVectorTextureRead.texture,
             userInput
         });
+
+        this.gl.clearColor(this.bgCol,this.bgCol,this.bgCol, 1.0);
 
         this.particles.update({scene: this.scene, flowMap: this.fluidSim.FluidOutput, t: deltaTime})
 
