@@ -1,4 +1,4 @@
-import {Mesh, Texture} from 'ogl';
+import {Mesh, Texture, Vec3} from 'ogl';
 import {Program} from 'ogl';
 import {Plane} from 'ogl';
 import {Geometry} from 'ogl';
@@ -51,15 +51,22 @@ export default class Particles extends Mesh {
 
     initGeometry() {
 
-        const scale = 0.003;
         const refGeometry = new Plane(this.gl, {width: 1.0, height: 1.0});
-        // const refGeometry = new Box(this.gl);
         const {position, normal, uv, index} = refGeometry.attributes;
 
         const localPositionData = position.data;
         const normalData = normal.data;
         const uvData = uv.data;
         const indexData = index.data;
+
+        const paramsData = new Float32Array(this.countX * this.countY * 3);
+        let paramsDataIterator = 0;
+
+        for(let i = 0; i < this.countX * this.countY; i++) {
+            paramsData[paramsDataIterator++] = Math.random();
+            paramsData[paramsDataIterator++] = Math.random();
+            paramsData[paramsDataIterator++] = Math.random();
+        }
 
         this.geometry = new Geometry(this.gl, {
 
@@ -80,9 +87,14 @@ export default class Particles extends Mesh {
                 size: 3,
                 data: normalData
             },
+            params: {
+                size: 3,
+                instanced: 1,
+                data: paramsData
+            },
             index: {
                 data: indexData
-            },
+            }
 
         });
 
@@ -122,6 +134,9 @@ export default class Particles extends Mesh {
             },
             _FlowMap: {
                 value: new Texture(this.gl)
+            },
+            _Light: {
+                value: new Vec3(0.0, 10.0, 5.0).normalize()
             }
 
         }
@@ -175,6 +190,10 @@ export default class Particles extends Mesh {
 
         this.program.uniforms._Bias.value = 0.005;
 
+    }
+
+    onResize() {
+        this.simulator.onResize();
     }
 
 }

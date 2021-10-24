@@ -3,37 +3,30 @@ precision highp float;
 attribute vec3 position;
 attribute vec3 worldPosition;
 attribute vec2 uv;
-
-uniform sampler2D _FlowMap;
+attribute vec3 params;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
+uniform sampler2D _Position;
+uniform sampler2D _Velocity;
+
 uniform mat4 shadowProjectionMatrix;
 uniform mat4 shadowViewMatrix;
 uniform sampler2D tShadow;
 
-uniform vec2 _Resolution;
 uniform float _ShadowMapTexelSize;
 uniform float _ShadowWeight;
 uniform float _Bias;
 
-uniform sampler2D _Position;
-uniform sampler2D _Velocity;
-
 varying vec2 vUv;
-varying vec4 vShadowCoord;
-varying vec3 vNormal;
 varying float vLife;
-varying vec3 vWorldPos;
-varying float vVelocity;
 varying float vShadow;
-varying vec2 vClipPos;
 
 //#define SCALE 0.025
-#define SCALE 0.025
+#define SCALE 0.035
 
 float unpackRGBA (vec4 v) {
     return dot(v, 1.0 / vec4(1.0, 255.0, 65025.0, 16581375.0));
@@ -82,7 +75,7 @@ void main() {
     float scalePhase = (worldPos.w * 4.0 * (1.0 - worldPos.w)) ;
 
     vec4 modelViewPos = modelViewMatrix * vec4(worldPos.xyz, 1.0);
-    modelViewPos.xy += position.xy * SCALE * scalePhase;
+    modelViewPos.xy += position.xy * SCALE * scalePhase * mix(0.75, 1.0, params.x);
 
     gl_Position = projectionMatrix * modelViewPos;
 
@@ -92,8 +85,6 @@ void main() {
 
     vUv = uv;
     vLife = worldPos.w;
-    vWorldPos = worldPos.xyz;
-
 
 }
 

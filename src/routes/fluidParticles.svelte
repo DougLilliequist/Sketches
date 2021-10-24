@@ -1,6 +1,6 @@
 <script>
 
-    import { onMount, tick } from 'svelte';
+    import {onMount, tick} from 'svelte';
     import {fluidParticles} from '$lib/sketches/fluidParticles/fluidParticles.js';
 
     //--------------------------------
@@ -11,6 +11,9 @@
 
     let containerWidth = 2;
     let containerHeight = 2;
+
+    let canvasWidth = 2;
+    let canvasHeight = 2;
 
     let firstMove = true;
 
@@ -29,7 +32,7 @@
 
     //--------------------------------
 
-    onMount(async()=> {
+    onMount(async () => {
 
         await tick();
 
@@ -52,7 +55,7 @@
         const x = event.pageX;
         const y = event.pageY;
 
-        if(firstMove) {
+        if (firstMove) {
             firstMove = false;
             userInput.prevPosX = x;
             userInput.prevPosY = y;
@@ -67,7 +70,7 @@
         userInput.prevPosX = userInput.posX;
         userInput.prevPosY = userInput.posY;
 
-        if(Math.abs(userInput.deltaX) || Math.abs(userInput.deltaY)) {
+        if (Math.abs(userInput.deltaX) || Math.abs(userInput.deltaY)) {
 
             sketch.fluidSim.splats.push({
                 posX: userInput.posX / window.innerWidth,
@@ -77,7 +80,6 @@
             });
 
         }
-
 
 
     }
@@ -90,35 +92,36 @@
 
     }
 
-    const handleResize = () => {
-        sketch.onresize({width: containerWidth, height: containerHeight})
+    const handleResize = async() => {
+        await tick();
+        sketch.onResize({width: canvasWidth, height: canvasHeight})
     }
 
 </script>
 
-<svelte:window on:resize={handleResize} />
+<svelte:window on:resize={handleResize}/>
 
-<main class=sketch bind:this={el} bind:clientWidth={containerWidth} bind:clientHeight={containerHeight} on:mousemove={handleMouseMove}>
+<main class=sketch bind:this={el} on:mousemove={handleMouseMove} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight}>
     <canvas class=webgl-canvas bind:this={canvas}></canvas>
 </main>
 
 <style lang=scss>
 
-    .sketch {
-            position: absolute;
-            min-width: 100vw;
-            min-height: 100vh;
-            overflow: hidden;
+  main {
+    position: relative;
+    min-width: 100vw;
+    min-height: 100vh;
+    overflow: hidden;
+
+    > .webgl-canvas:first-of-type {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      margin: 0;
     }
 
-    .webgl-canvas {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            margin: 0;
-            border: 0px;
-    }
+  }
 
 </style>

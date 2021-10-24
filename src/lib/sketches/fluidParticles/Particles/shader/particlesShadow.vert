@@ -3,6 +3,7 @@ precision highp float;
 attribute vec3 position;
 attribute vec3 worldPosition;
 attribute vec2 uv;
+attribute vec3 params;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
@@ -13,10 +14,8 @@ uniform sampler2D _Velocity;
 varying vec2 vUv;
 varying float vLife;
 
-// #define SCALE 0.0085
-// #define SCALE 0.0075
-// #define SCALE 0.035
-#define SCALE 0.025
+
+#define SCALE 0.035
 
 
 void main() {
@@ -26,7 +25,7 @@ void main() {
     float scalePhase = (worldPos.w * 4.0 * (1.0 - worldPos.w));
 
     vec4 modelViewPos = modelViewMatrix * vec4(worldPos.xyz, 1.0);
-    modelViewPos.xy += position.xy * SCALE * scalePhase;
+    modelViewPos.xy += position.xy * SCALE * scalePhase * mix(0.75, 1.0, params.x);
 
     gl_Position = projectionMatrix * modelViewPos;
 

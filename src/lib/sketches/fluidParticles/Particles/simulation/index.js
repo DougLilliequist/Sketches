@@ -5,7 +5,6 @@ import { Mat4 } from 'ogl';
 
 import positionKernel from './kernels/position.frag?raw';
 import velocityKernel from './kernels/velocity.frag?raw';
-import prevPositionKernel from './kernels/PrevPosiiton.frag?raw';
 
 export default class Simulator {
 
@@ -35,7 +34,6 @@ export default class Simulator {
         const dist = this.camera.position.z;
         this.viewportHeight = Math.tan((this.camera.fov * (Math.PI / 180.0)) * 0.5) * dist;
         this.viewportWidth = this.viewportHeight * this.camera.aspect;
-        // this.viewportWidth = this.viewportHeight * 1.0;
     }
 
     initEvents() {
@@ -107,18 +105,22 @@ export default class Simulator {
 
         const initPositionData = new Float32Array(this.countX * this.countY * 4);
 
+        const TAU = Math.PI * 2.0;
         let positionIterator = 0;
 
         for(let y = 0; y < this.countY; y++) {
             for(let x = 0; x < this.countX; x++) {
 
-                let posX = (Math.random() * 2.0 - 1.0) * this.viewportWidth;
-                let posY = (Math.random() * 2.0 - 1.0) * this.viewportHeight;
+                const hash1 = Math.random() * 2.0 - 1.0;
+                const hash2 = Math.random() * 2.0 - 1.0;
+
+                let posX = Math.cos(TAU * hash1) * this.viewportHeight * hash2 * 0.7;
+                let posY = Math.sin(TAU * hash1) * this.viewportHeight * hash2 * 0.7;
 
                 initPositionData[positionIterator++] = posX;
                 initPositionData[positionIterator++] = posY;
-                initPositionData[positionIterator++] = 0.0;
-                initPositionData[positionIterator++] = 0.0;
+                initPositionData[positionIterator++] = (Math.random() * 2.0 - 1.0) * 0.05;
+                initPositionData[positionIterator++] = Math.random();
 
             }
 
@@ -181,21 +183,20 @@ export default class Simulator {
 
     }
 
-    updateVelocity({flowMap, t}) {
+    updateVelocity(flowMap) {
+
         this.velocity.passes[0].program.uniforms._Fluid.value = flowMap;
         this.velocity.passes[0].program.uniforms._Position = this.position.uniform;
+
         this.velocity.render();
 
     }
 
-    updatePosition({flowMap, t}) {
+    updatePosition(t) {
 
         this.position.passes[0].program.uniforms._Velocity = this.velocity.uniform;
-        // this.position.passes[0].program.uniforms._Velocity.value = flowMap;
         this.position.passes[0].program.uniforms._Seed.value += t;
         this.position.passes[0].program.uniforms._Dt.value = t;
-        this.position.passes[0].program.uniforms._ViewMatrix.value.copy(this.camera.viewMatrix);
-        this.position.passes[0].program.uniforms._ProjectionMatrix.value.copy(this.camera.projectionMatrix);
 
         this.position.render();
 
@@ -206,8 +207,8 @@ export default class Simulator {
         this.modelViewMatrix.multiply(this.camera.viewMatrix, worldMatrix);
         this.viewProjectionMatrix.multiply(this.camera.projectionMatrix, this.modelViewMatrix);
 
-        this.updateVelocity({flowMap, t});
-        this.updatePosition({flowMap, t});
+        this.updateVelocity(flowMap);
+        this.updatePosition(t);
 
     }
 
@@ -240,12 +241,7 @@ export default class Simulator {
 
     onResize = () => {
 
-        const aspect = (this.gl.renderer.width / this.gl.renderer.height);
-        this.position.passes[0].program.uniforms._Aspect.value = aspect;
-
         this.camera.updateMatrixWorld();
-
-
         this.calcViewportDimensions();
         this.position.passes[0].program.uniforms._Bounds.value.set(this.viewportWidth, this.viewportHeight);
 

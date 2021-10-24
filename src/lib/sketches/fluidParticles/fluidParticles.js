@@ -22,12 +22,13 @@ export class fluidParticles {
             width: el.clientWidth,
             height: el.clientHeight,
             antialias: true,
+            powerPreference: 'high-performance',
             dpr: 1
         });
 
         this.gl = this.renderer.gl;
         this.bgCol = 0.9;
-        this.gl.clearColor(this.bgCol,this.bgCol,this.bgCol, 1.0);
+        this.gl.clearColor(this.bgCol, this.bgCol, this.bgCol, 1.0);
 
         const {
             clientWidth,
@@ -103,11 +104,11 @@ export class fluidParticles {
     }
 
     render({
-        scene,
-        camera = null,
-        target = null,
-        clear
-    }) {
+               scene,
+               camera = null,
+               target = null,
+               clear
+           }) {
         this.renderer.render({
             scene,
             camera,
@@ -116,10 +117,10 @@ export class fluidParticles {
     }
 
     update({
-        time,
-        deltaTime,
-        userInput
-    }) {
+               time,
+               deltaTime,
+               userInput
+           }) {
 
         this.controls.update();
 
@@ -141,32 +142,27 @@ export class fluidParticles {
             userInput
         });
 
-        this.gl.clearColor(this.bgCol,this.bgCol,this.bgCol, 1.0);
+        this.gl.clearColor(this.bgCol, this.bgCol, this.bgCol, 1.0);
 
         this.particles.update({scene: this.scene, flowMap: this.fluidSim.FluidOutput, t: deltaTime})
 
-            this.render({
-                scene: this.scene,
-                camera: this.camera,
-                clear: true
-            });
+        this.render({
+            scene: this.scene,
+            camera: this.camera,
+            clear: true
+        });
 
     }
 
-    onResize(width, height) {
-        if (width && height) {
-            this.renderer.setSize(width, height);
-            const {
-                clientWidth,
-                clientHeight
-            } = this.gl.canvas;
+    onResize({width, height}) {
 
-            this.wk = 1.0 / clientWidth;
-            this.hK = 1.0 / clientHeight;
+        this.renderer.setSize(width, height);
 
-            this.camera.perspective({
-                aspect: clientWidth / clientHeight
-            });
-        }
+        this.wk = 1.0 / width;
+        this.hK = 1.0 / height;
+
+        this.camera.perspective({
+            aspect: width / height
+        });
     }
 }

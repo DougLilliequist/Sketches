@@ -63,7 +63,8 @@ export default class Fluid {
             velocityDissipation: 1.0,
             pressureDissipation: 0.97,
             curlStrength: .5,
-            radius: 0.1
+            // radius: 0.1
+            radius: 0.2
 
         }
 
@@ -392,7 +393,7 @@ export default class Fluid {
                 value: new Vec2(1.0 / this.dyeRes, 1.0 / this.dyeRes)
             },
             uVelocity: {
-                value: null
+                value: new Texture(this.gl)
             },
             dt: {
                 value: 0.016
@@ -432,19 +433,8 @@ export default class Fluid {
             sort: false,
             update: false
         });
+
         this.velocityFBO.swap();
-
-        this.splatProgram.program.uniforms.uTarget.value = this.densityFBO.read.texture;
-        this.splatProgram.program.uniforms.inputVelocity.value.set(userInput.deltaX, userInput.deltaY, 0.0);
-
-        this.gl.renderer.render({
-            scene: this.splatProgram,
-            target: this.densityFBO.write,
-            sort: false,
-            update: false
-        });
-
-        this.densityFBO.swap();
 
     }
 
@@ -494,7 +484,6 @@ export default class Fluid {
 
         this.velocityFBO.swap();
 
-
         this.advectionProgram.program.uniforms.dyeTexelSize.value.set(1 / this.simRes);
         this.advectionProgram.program.uniforms.uVelocity.value = this.velocityFBO.read.texture;
         this.advectionProgram.program.uniforms.uSource.value = this.velocityFBO.read.texture;
@@ -515,21 +504,17 @@ export default class Fluid {
 
         this.gl.renderer.render({
             scene: this.velocityFieldProgram,
-            target: this.velocityFieldFBO.write,
+            target: this.velocityFieldTarget,
             sort: false,
             update: false
         });
-
-        this.velocityFieldFBO.swap();
 
         this.gl.renderer.autoClear = true;
 
     }
 
     get FluidOutput() {
-        // return this.densityFBO.read.texture
-        // return this.velocityFieldTarget.texture
-        return this.velocityFieldFBO.read.texture;
+        return this.velocityFieldTarget.texture;
     }
 
     createPingPongBuffer({
