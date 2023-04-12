@@ -8,7 +8,7 @@ export default class AlienConstructMesh extends Mesh {
         super(gl);
 
         this.gl = gl;
-        this.resolution = 8;
+        this.resolution = 64;
         this.initGeometry();
         this.initProgram();
 

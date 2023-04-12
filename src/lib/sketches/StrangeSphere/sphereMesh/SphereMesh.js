@@ -19,9 +19,9 @@ export class SphereMesh extends Mesh {
     }
 
     initGeometry() {
-        
+
         this.geometry = new Sphere(this.gl, {
-            widthSegments: 256,
+            widthSegments: 128,
             radius:1.0
         });
 

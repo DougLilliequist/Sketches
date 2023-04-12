@@ -136,7 +136,7 @@ export default class Particles extends Mesh {
                 value: new Texture(this.gl)
             },
             _Light: {
-                value: new Vec3(0.0, 10.0, 5.0).normalize()
+                value: new Vec3(0.0, 5.0, 3.0).normalize()
             }
 
         }

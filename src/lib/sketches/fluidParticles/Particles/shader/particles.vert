@@ -5,6 +5,7 @@ attribute vec3 worldPosition;
 attribute vec2 uv;
 attribute vec3 params;
 
+uniform vec3 cameraPosition;
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 viewMatrix;
@@ -24,6 +25,8 @@ uniform float _Bias;
 varying vec2 vUv;
 varying float vLife;
 varying float vShadow;
+varying vec3 vWorldPos;
+varying vec3 vEyeDir;
 
 //#define SCALE 0.025
 #define SCALE 0.035
@@ -71,11 +74,11 @@ void main() {
 
 
     vec4 worldPos = texture2D(_Position, worldPosition.xy);
-
     float scalePhase = (worldPos.w * 4.0 * (1.0 - worldPos.w)) ;
 
     vec4 modelViewPos = modelViewMatrix * vec4(worldPos.xyz, 1.0);
     modelViewPos.xy += position.xy * SCALE * scalePhase * mix(0.75, 1.0, params.x);
+    vEyeDir = -modelViewPos.xyz;
 
     gl_Position = projectionMatrix * modelViewPos;
 
@@ -85,6 +88,7 @@ void main() {
 
     vUv = uv;
     vLife = worldPos.w;
+    vWorldPos = modelViewPos.xyz;
 
 }
 

@@ -56,7 +56,7 @@ void main() {
     // col *= halfLambert + matcapLight;
     // col += matcapLight*.3;
 
-    gl_FragColor = vec4(col, 1.0);
+    gl_FragColor = vec4(vec3(matcapLight), 1.0);
     // gl_FragColor = vec4(vec3(matcapLight*(halfLambert+fresnel)), 1.0);
     // gl_FragColor = vec4(vec3(vTarget), 1.0);
     // gl_FragColor = vec4(vec3(halfLambert), 1.0);

@@ -6,4 +6,10 @@
     <li><a href="/soundScape">Sound Scape</a><li>
     <li><a href="/alienConstruct">Alien Construct</a><li>
     <li><a href="/fluidParticles">Fluid Particles</a><li>
+    <li><a href="/matrix">Matrix</a><li>
+    <li><a href="/fluid2d">Fluid2D</a><li>
+    <li><a href="/reactionDiffusion">Reaction Diffusion</a><li>
+    <li><a href="/ripple2d">ripple 2d</a><li>
+    <li><a href="/jumpflooding">jump flooding</a><li>
+    <li><a href="/screenspacefluid">screen space fluid</a><li>
 </ul>

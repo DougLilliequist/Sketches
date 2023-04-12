@@ -11,6 +11,7 @@ void main() {
 
     float light = dot(normalize(LIGHT), vNormal) * 0.5 + 0.5;
 
-    gl_FragColor = vec4(mix(vec3(0.865, 0.8, 0.1), vec3(0.985456, 0.98534, 0.0), light), 1.0);
+//    gl_FragColor = vec4(mix(vec3(0.865, 0.8, 0.1), vec3(0.985456, 0.98534, 0.0), light), 1.0);
+    gl_FragColor = vec4(vec3(light), 1.0);
 
 }
