@@ -21,7 +21,7 @@ void main() {
     float inputPhase = max(0.00001, smoothstep(0.0, 1.0, uInputMag));
     float mag = exp(-dot(dir, dir) / (uRadius * inputPhase));
 //    u += (uInput * 0.5 + normalize(vec3(-dir, 0.0))*length(uInput)) * mag * uDt;
-    u += uInput * mag * uDt;
+    u += uInput * mag * uDt * 1.0;
 
     gl_FragColor = vec4(u, 1.0);
 

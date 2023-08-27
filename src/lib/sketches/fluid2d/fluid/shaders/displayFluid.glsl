@@ -45,9 +45,9 @@ void main() {
         float T = texture2D(tFluid, vUv + vec2(0.0, uStep*0.5)).x;
         float B = texture2D(tFluid, vUv + vec2(0.0, -uStep*0.5)).x;
 
-//    gl_FragColor = vec4(texture2D(tFluid, vUv).xyz , 1.0);
+    gl_FragColor = vec4(texture2D(tFluid, vUv).xyz , 1.0);
 //    gl_FragColor = vec4(smoothstep(0.0, 1.0, (L + R + T + B) * 0.25) , 1.0);
-    gl_FragColor = vec4(vec3((L + R + T + B) * 0.25), 1.0);
+//    gl_FragColor = vec4(vec3((L + R + T + B) * 0.25), 1.0);
 
 
 }

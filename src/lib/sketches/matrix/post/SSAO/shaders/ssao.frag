@@ -30,7 +30,9 @@ vec3 hash32(vec2 p)
 mat3 setupHemisphereBasis(in vec3 normal) {
 
     //tiled blue noise based vectors which are used to rotate the basis in random directions
-    vec3 randomVec = vec3(texture2D(tNoise, (gl_FragCoord.xy + mod(uTime, 256.0))/uNoiseRes).xy*2.0-1.0, 0.0);
+//    vec3 randomVec = vec3(texture2D(tNoise, (gl_FragCoord.xy + mod(uTime*10.0, 256.0))/uNoiseRes).xy*2.0-1.0, 0.0);
+    vec3 randomVec = vec3(texture2D(tNoise, (gl_FragCoord.xy + mod(uTime*100.0, 256.0))/uNoiseRes).xy*2.0-1.0, 0.0);
+//    vec3 randomVec = vec3(texture2D(tNoise, (gl_FragCoord.xy)/uNoiseRes).xy*2.0-1.0, 0.0);
 
     vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 biTangent = cross(normal, tangent);
@@ -39,7 +41,7 @@ mat3 setupHemisphereBasis(in vec3 normal) {
 
 float calcOcclusion(vec3 normal, vec3 pos) {
     float occlusion = 0.0;
-    for(int i = 0; i < 24; i++) {
+    for(int i = 0; i < 14; i++) {
 
         vec3 samplePos = setupHemisphereBasis(normal) * uSamplePoints[i];
         samplePos = pos + samplePos * uSampleRadius;
@@ -47,6 +49,8 @@ float calcOcclusion(vec3 normal, vec3 pos) {
         vec4 offset = projectionMatrix * vec4(samplePos, 1.0);
         offset.xy /= offset.w;
         offset = offset * 0.5 + 0.5;
+
+        //offset.xy = (floor(offset.xy * uResolution) + 0.5) / uResolution;
 
         float sampledDepth = texture2D(tPositions, offset.xy).z;
         float depthFix = smoothstep(0.0, 1.0, uSampleRadius / abs(sampledDepth - pos.z));

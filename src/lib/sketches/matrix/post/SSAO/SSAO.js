@@ -12,7 +12,7 @@ export default class SSAO {
         // this.geo = new Plane(this.gl, {width: 2, height: 2});
         this.geo = new Triangle(this.gl);
         // this.KERNELSIZE = 24;
-        this.KERNELSIZE = 24;
+        this.KERNELSIZE = 14;
         // this.KERNELSIZE = 64;
         this.tmpMat4 = new Mat4();
 
@@ -48,8 +48,8 @@ export default class SSAO {
         if (!type) type = this.gl.HALF_FLOAT || this.gl.renderer.extensions['OES_texture_half_float'].HALF_FLOAT_OES;
 
         const options = {
-            width: this.gl.canvas.width,
-            height: this.gl.canvas.height,
+            width: this.gl.canvas.width * 0.5,
+            height: this.gl.canvas.height * 0.5,
             type,
             format: this.gl.RGBA,
             internalFormat: this.gl.renderer.isWebgl2 ? (type === this.gl.FLOAT ? this.gl.RGBA32F : this.gl.RGBA16F) : this.gl.RGBA,
@@ -60,6 +60,7 @@ export default class SSAO {
         };
 
         this.ssaoBuffer = new RenderTarget(this.gl, options);
+        this.ssaoBufferPrev = new RenderTarget(this.gl, options);
     }
 
     initPrograms() {
@@ -74,16 +75,18 @@ export default class SSAO {
                 tDepth: {value: new Texture(this.gl)},
                 uNoiseRes: {value: 256},
                 uSamplePoints: {value: this.initSampleOffsets()},
-                uSampleRadius: {value: 0.25}, //.17
+                //uSampleRadius: {value: 0.25}, //.17
+                uSampleRadius: {value: 0.24}, //.17
                 // uSampleRadius: {value: 0.17}, //.17
                 // uSampleRadius: {value: 0.5}, //.17
-                uBias: {value: 0.025}, //0.015
+                //uBias: {value: 0.025}, //0.015
+                uBias: {value: 0.005}, //0.015
                 uProjMatrix: {value: new Mat4()},
                 uInvProjMatrix: {value: new Mat4()},
                 uNear: {value: this.gl.camera.near},
                 uFar: {value: this.gl.camera.far},
                 uQuality: {value: this.KERNELSIZE},
-                uResolution: {value: new Vec2(this.gl.canvas.width, this.gl.canvas.height)},
+                uResolution: {value: new Vec2(this.gl.canvas.width*0.5, this.gl.canvas.height*0.5)},
                 uTime: {value: 0}
             }
         });
@@ -105,7 +108,7 @@ export default class SSAO {
         //     })
         // });
 
-        this.blurPass = new DualFilterBlurPass(this.gl, {stepCount: 1, width: this.gl.canvas.width, height: this.gl.canvas.height});
+        this.blurPass = new DualFilterBlurPass(this.gl, {stepCount: 1, width: this.gl.canvas.width*0.5, height: this.gl.canvas.height*0.5});
 
         this.ssaoBufferBlurred = new RenderTarget(this.gl, {width: this.gl.canvas.width * 0.5, height: this.gl.canvas.height * 0.5});
 
@@ -176,11 +179,17 @@ export default class SSAO {
     //WebGL1 approach (and horrible as MRT's allows for far more elegant solutions)
     //TODO: consider using CRYTEKS simplified version on WebGL1 which only requires depth
     render({positions, normals, time}) {
+
+        let tmp = this.ssaoBuffer;
+        this.ssaoBuffer = this.ssaoBufferPrev;
+        this.ssaoBufferPrev = tmp;
+
         this.program.program.uniforms['tPositions'].value = positions;
         this.program.program.uniforms['tNormals'].value = normals;
         this.program.program.uniforms['uTime'].value = time * 1.5;
 
         this.gl.renderer.render({scene: this.program, camera: this.gl.camera, target: this.ssaoBuffer});
+
 
         // this.blurPass.program.uniforms['tDiffuse'].value = this.ssaoBuffer.texture;
         // this.gl.renderer.render({scene: this.blurPass, target: this.ssaoBufferBlurred});
@@ -189,8 +198,9 @@ export default class SSAO {
 
     }
 
-     // get Output() {return this.ssaoBuffer.texture;}
+     get Output() {return this.ssaoBuffer.texture;}
+     // get PrevOutput() {return this.ssaoBufferPrev.texture;}
      // get Output() {return this.ssaoBufferBlurred.texture;}
-    get Output() {return this.blurPass.Output;}
+    // get Output() {return this.blurPass.Output;}
 
 }

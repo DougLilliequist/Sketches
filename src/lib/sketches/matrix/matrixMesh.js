@@ -135,7 +135,7 @@ export class MatrixMesh extends Transform {
          if(!this.mesh) return;
          this.mesh.program.uniforms.uTime.value = t;
          if(depth) this.mesh.program.uniforms.tDepth.value = depth;
-         this.mesh.rotation.y = t * 0.00025;
+         //this.mesh.rotation.y = t * 0.00025;
         }
 
     computeCentroid(a, b, c) {

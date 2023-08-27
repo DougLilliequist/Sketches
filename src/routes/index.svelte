@@ -12,4 +12,8 @@
     <li><a href="/ripple2d">ripple 2d</a><li>
     <li><a href="/jumpflooding">jump flooding</a><li>
     <li><a href="/screenspacefluid">screen space fluid</a><li>
+    <li><a href="/softbody">softbody</a><li>
+    <li><a href="/temporalaademo">temporal anti-aliasing demo</a><li>
+    <li><a href="/dissolve">dissolve</a><li>
+    <li><a href="/kreatur">kreatur</a><li>
 </ul>

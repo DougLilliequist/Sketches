@@ -1,4 +1,4 @@
-import {RenderTarget, Texture, Triangle, Mesh, Program} from "ogl";
+import {RenderTarget, Texture, Triangle, Mesh, Program, Vec2} from "ogl";
 
 import screenQuad from './screenQuad.vert?raw'
 import copy from '$lib/sketches/matrix/post/copy.frag?raw'
@@ -15,8 +15,12 @@ export default class Post {
 
         this.gl = gl;
         this.geo = new Triangle(this.gl);
-        this.buffer = new RenderTarget(this.gl, {depth: true, depthTexture: true});
-        this.bufferPrev = new RenderTarget(this.gl, {depth: true, depthTexture: true});
+
+        const width = this.gl.canvas.width;
+        const height = this.gl.canvas.height;
+
+        this.buffer = new RenderTarget(this.gl, {width, height, depth: true, depthTexture: true});
+        this.bufferPrev = new RenderTarget(this.gl, {width, height, depth: true, depthTexture: true});
 
         this.shaderParams = {
             ssao_intensity: 1.0
@@ -63,10 +67,12 @@ export default class Post {
             // };
 
         const options = {
+            width: this.gl.canvas.width * 0.5,
+            height: this.gl.canvas.height * 0.5,
             type: type || this.gl.HALF_FLOAT || this.gl.renderer.extensions['OES_texture_half_float'].HALF_FLOAT_OES,
             format: this.gl.RGBA,
             internalFormat: this.gl.renderer.isWebgl2 ? (type === this.gl.FLOAT ? this.gl.RGBA32F : this.gl.RGBA16F) : this.gl.RGBA,
-            minFilter: this.gl.NEAREST,
+            // minFilter: this.gl.NEAREST,
             unpackAlignment: 1,
         };
 
@@ -104,9 +110,11 @@ export default class Post {
         const compositeProgramUniforms = {
             tDiffuse: {value: new Texture(this.gl)},
             tSSAO: {value: new Texture(this.gl)},
+            tSSAOPrev: {value: new Texture(this.gl)},
             tDepth: {value: new Texture(this.gl)},
             uSSAOIntensity: {value: 1.0},
-            uTime: {value: 0}
+            uTime: {value: 0},
+            uResolution: {value: new Vec2()}
         }
 
 
@@ -148,11 +156,14 @@ export default class Post {
         //else, skip this step and just proceed to SSAO which will have buffers containing normals and positions at this point
         this.ssao.render({positions: this.viewPosBuffer.texture, normals: this.normalBuffer.texture, time});
 
+        const width = this.gl.canvas.width * 0.5;
+        const height = this.gl.canvas.height * 0.5;
         //composite!
         this.compositeProgram.program.uniforms['tDiffuse'].value = this.buffer.texture;
         this.compositeProgram.program.uniforms['tSSAO'].value = this.ssao.Output;
         this.compositeProgram.program.uniforms['uTime'].value = time * 0.01;
         this.compositeProgram.program.uniforms['tDepth'].value = this.bufferPrev.texture;
+        this.compositeProgram.program.uniforms['uResolution'].value.set(width, height);
 
         this.gl.renderer.render({scene: this.compositeProgram});
 
