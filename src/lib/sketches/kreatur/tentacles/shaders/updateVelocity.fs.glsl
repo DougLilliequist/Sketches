@@ -22,10 +22,14 @@ void main() {
     if(vUv.x < 1.0 - uTexelSize.x) {
         vec3 D = texture(tNextCorrection, vec2(vUv.x + uTexelSize.x, vUv.y)).xyz;
 //        vel = vel + (-D / uDeltaTime);
+
+        //.93 is the best setting iirc from paper?
         vel += (-D / uDeltaTime) * 0.93;
     }
 
+    //.97 looks best so far
     vel *= 0.97;
+//    vel *= 0.9;
 
     data = vec4(vel, 1.0);
 

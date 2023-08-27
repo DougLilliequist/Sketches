@@ -30,7 +30,10 @@ void main() {
     vec3 pos = texture(tPosition, vUv).xyz;
     vec3 correction = vec3(0.0);
 
+    //from müllers examples...complience should be a large number?
+
     float compliance = 0.00001 / uDeltaTime / uDeltaTime;
+//    float compliance = 0.00005 / uDeltaTime / uDeltaTime;
 //    compliance = 1.0 / compliance;
 
     if(vUv.x > uTexelSize.x) {
@@ -39,6 +42,7 @@ void main() {
         vec3 dir = target - pos.xyz;
         float mag = length(dir);
         if(mag > 0.0) {
+//            correction = normalize(dir) * (mag - uRestLength.x * 0.15);
             correction = normalize(dir) * (mag - uRestLength.x);
             correction /= (2.0 + compliance);
             pos.xyz += correction;

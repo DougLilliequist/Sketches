@@ -19,8 +19,8 @@ export default class Body extends Transform {
         this.steerForce = new Vec3();
         this.acc = new Vec3();
 
-        this.maxSpeed = 0.05;
-        this.maxForce = 0.01;
+        this.maxSpeed = 0.035;
+        this.maxForce = 0.001;
 
         this.forward = new Vec3(0.0, 0.0, -1.0);
 
@@ -30,23 +30,25 @@ export default class Body extends Transform {
         this.initTestMesh();
 
         this.numPoints = 42;
+        // this.numPoints = 1;
 
         this.roots = this.generateroots();
         this.rootPositions = new Array(this.roots.length);
 
         for(let i = 0; i < this.roots.length; i++) {
-            const p = new Mesh(this.gl, {
-                geometry: new Sphere(this.gl, {radius: 0.1}),
-                program: new Program(this.gl, {
-                    vertex: testMeshVS,
-                    fragment: testMeshFS,
-                    uniforms: {
-                        uColorMode: {value: 0}
-                    }
-                })
-            });
+            // const p = new Mesh(this.gl, {
+            //     geometry: new Sphere(this.gl, {radius: 0.1}),
+            //     program: new Program(this.gl, {
+            //         vertex: testMeshVS,
+            //         fragment: testMeshFS,
+            //         uniforms: {
+            //             uColorMode: {value: 0}
+            //         }
+            //     })
+            // });
+            const p = new Transform();
 
-            p.position.clone(p.position);
+            p.position.clone(this.roots[i].position);
             this.debugMesh.addChild(p);
         }
 
@@ -55,15 +57,25 @@ export default class Body extends Transform {
     }
 
     generateroots() {
+
         const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // Golden angle in radians
         const points = [];
+
+        if(this.numPoints < 2) {
+            const p = new Transform();
+            p.position.set(0, 0, 0);
+            p.worldPosition = new Vec3(0, 0, 0);
+
+            points.push(p);
+            return points;
+        }
 
         for (let i = 0; i < this.numPoints ; i++) {
 
             const phase = i / (this.numPoints - 1);
             const latitude = Math.asin(1 - (2.0 * phase)); // Distribute between -π/2 and π/2
             const longitude = goldenAngle * i;
-            const r = 0.2;
+            const r = 0.1;
             const x = Math.cos(longitude) * Math.cos(latitude) * r;
             const y = Math.sin(longitude) * Math.cos(latitude) * r;
             const z = Math.sin(latitude) * r;
@@ -134,7 +146,7 @@ export default class Body extends Transform {
         const radius = 2;
 
         this.target.x = Math.cos(t * speed) * radius * 2.0;
-        this.target.y = Math.sin(t * speed * 1.5) * radius;
+        this.target.y = Math.sin(t * speed * 0.5) * radius;
         this.target.z = Math.sin(t * speed) * radius * 2.0;
 
         this.targetDebug.position = this.target;

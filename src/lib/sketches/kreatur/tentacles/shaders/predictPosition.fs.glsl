@@ -4,7 +4,6 @@ precision highp float;
 
 uniform sampler2D tPosition;
 uniform sampler2D tVelocity;
-uniform sampler2D tNormal;
 
 uniform vec3[42] uRootPositions;
 
@@ -164,7 +163,6 @@ void main() {
     vec4 pos = texture(tPosition, vUv);
 
     vec3 vel = texture(tVelocity, vUv).xyz;
-    vec3 normal = texture(tNormal, vUv).xyz;
 
     //store previous position
     FragData[0] = vec4(pos.xyz, 1.0);
@@ -179,10 +177,12 @@ void main() {
 
 //        vel += g;
         vec3 norm = normalize(rootPos - uOrigin);
-        vec3 curlForce = curlNoise(newPos.xyz * 0.5 + uTime * 0.01) * 50.0 * uDeltaTime;
+//        vec3 curlForce = curlNoise(newPos.xyz * 0.5 + uTime * 0.01) * 50.0 * uDeltaTime;
+        vec3 curlForce = curlNoise(newPos.xyz * 0.5) * 50.0 * uDeltaTime;
+//        vec3 curlForce = curlNoise(newPos.xyz * 0.5) * 50.0 * uDeltaTime;
         //vel += mix(norm, curlForce, smoothstep(0.0, 0.3, vUv.x)) * uDeltaTime;
 
-        vel += norm * 10.0 * uDeltaTime;
+        vel += norm * 40.0 * uDeltaTime;
         vel += curlForce;
 
         newPos.xyz += vel * uDeltaTime;

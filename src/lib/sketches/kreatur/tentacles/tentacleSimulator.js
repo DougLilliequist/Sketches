@@ -5,7 +5,7 @@ import copyDataFS from './shaders/copyData.fs.glsl?raw';
 import predictPosition from './shaders/predictPosition.fs.glsl?raw';
 import constrainCollide from './shaders/constrainCollide.fs.glsl?raw';
 import updateVelocity from './shaders/updateVelocity.fs.glsl?raw';
-import computeNormals from './shaders/computeNormals.fs.glsl?raw';
+import computeTangents from './shaders/computeTangents.fs.glsl?raw';
 
 export default class TentacleSimulator {
 
@@ -125,7 +125,7 @@ export default class TentacleSimulator {
             color: 2
         });
         this.velocityBuffer = new RenderTarget(this.gl, options);
-        this.normalsBuffer = new RenderTarget(this.gl, options);
+        this.tangentsBuffer = new RenderTarget(this.gl, options);
         this.solvedPositionsBuffer = new RenderTarget(this.gl, options);
 
     }
@@ -133,6 +133,7 @@ export default class TentacleSimulator {
     initPrograms() {
 
         const geometry = new Triangle(this.gl);
+        console.log(this.deltaTime);
 
         const predictPositionShader = new Program(this.gl, {
             vertex: screenQuad,
@@ -143,9 +144,6 @@ export default class TentacleSimulator {
                 },
                 tVelocity: {
                     value: this.initVelocity
-                },
-                tNormal: {
-                    value: this.normalsBuffer.texture
                 },
                 uOrigin: {
                     value: new Vec3()
@@ -242,7 +240,7 @@ export default class TentacleSimulator {
 
         const normalsShader = new Program(this.gl, {
             vertex: screenQuad,
-            fragment: computeNormals,
+            fragment: computeTangents,
             uniforms: {
                 tPosition: {
                     value: null
@@ -271,7 +269,6 @@ export default class TentacleSimulator {
 
     predictPositions({inputPos, interacting = false, bodyPos} = {}) {
         this.predictPositionProgram.program.uniforms.tVelocity.value = this.velocityBuffer.texture;
-        this.predictPositionProgram.program.uniforms.tNormal.value = this.normalsBuffer.texture;
         this.predictPositionProgram.program.uniforms.tPosition.value = this.iterationBuffer.textures[0];
         this.predictPositionProgram.program.uniforms.uRootPositions.value = this.rootPositions;
         this.predictPositionProgram.program.uniforms.uOrigin.value.copy(bodyPos);
@@ -297,9 +294,9 @@ export default class TentacleSimulator {
 
     }
 
-    computeNormals() {
+    computeTangents() {
         this.normalsProgram.program.uniforms.tPosition.value = this.iterationBuffer.textures[0];
-        this.gl.renderer.render({scene: this.normalsProgram, target: this.normalsBuffer});
+        this.gl.renderer.render({scene: this.normalsProgram, target: this.tangentsBuffer});
     }
 
     update({inputPos = null, interacting = false, rootPositions, bodyPos} = {}) {
@@ -312,7 +309,7 @@ export default class TentacleSimulator {
             this.updateVelocity();
         }
 
-        this.computeNormals();
+        this.computeTangents();
     }
 
     createDataTexture({data, width, height}) {
@@ -335,12 +332,12 @@ export default class TentacleSimulator {
 
     }
 
-    get position() {
+    get positions() {
         return this.iterationBuffer.textures[0];
     }
 
-    get normals() {
-        return this.normalsBuffer.texture;
+    get tangents() {
+        return this.tangentsBuffer.texture;
     }
 
 }
