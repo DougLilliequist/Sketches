@@ -345,4 +345,8 @@ export default class TentacleSimulator {
         return this.tangentsBuffer.texture;
     }
 
+    get velocities() {
+        return this.velocityBuffer.texture;
+    }
+
 }

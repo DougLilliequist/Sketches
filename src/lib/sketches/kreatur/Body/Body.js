@@ -156,7 +156,7 @@ export default class Body extends Transform {
         const speed = 0.0015;
 
         this.target.x = Math.cos(t * speed) * Math.sin((t * 0.0015) + 23123) * 4.0;
-        this.target.y = Math.sin(t * speed * 0.5) * Math.cos((t * 0.0015) + 12312.0) * 4;
+        this.target.y = Math.sin(t * speed * 0.5) * Math.sin((t * 0.0015) + 12312.0) * 4;
         this.target.z = Math.sin(t * speed) * Math.sin((t * 0.0015) + 9432.012) * 4.0;
 
         this.targetDebug.position = this.target;

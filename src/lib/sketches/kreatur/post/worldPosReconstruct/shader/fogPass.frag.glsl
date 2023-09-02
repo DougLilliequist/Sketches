@@ -62,7 +62,7 @@ void main() {
     #endif
 
 //    col = mix(col, vec3(0.7, 0.8, 0.93), fog);
-    col = mix(col, vec3(0.93, 0.93, 0.93), fog);
+    col = mix(col, vec3(0.83, 0.88, 0.98), fog);
 
     vec3 hash1 = hash32(gl_FragCoord.xy+fract(_Time)*1300.0);
     vec3 hash2 = hash32(gl_FragCoord.yx+fract(_Time+0.3123)*1300.0);
