@@ -5,7 +5,7 @@ precision highp float;
 uniform sampler2D tPosition;
 uniform sampler2D tVelocity;
 
-uniform vec3[42] uRootPositions;
+uniform vec3[80] uRootPositions;
 
 uniform float uTime;
 uniform float uDeltaTime;
@@ -175,15 +175,12 @@ void main() {
 
     if(vUv.x > uTexelSize.x) {
 
-//        vel += g;
         vec3 norm = normalize(rootPos - uOrigin);
-//        vec3 curlForce = curlNoise(newPos.xyz * 0.5 + uTime * 0.01) * 50.0 * uDeltaTime;
-        vec3 curlForce = curlNoise(newPos.xyz * 0.5) * 50.0 * uDeltaTime;
-//        vec3 curlForce = curlNoise(newPos.xyz * 0.5) * 50.0 * uDeltaTime;
-        //vel += mix(norm, curlForce, smoothstep(0.0, 0.3, vUv.x)) * uDeltaTime;
+        vec3 curlForce = curlNoise(((newPos.xyz + norm.xyz * 0.3) * 0.5) + uTime * 0.01);
+//        vec3 curlForce = curlNoise(((newPos.xyz + norm.xyz * 0.01) * 0.5) + uTime * 0.01);
 
-        vel += norm * 40.0 * uDeltaTime;
-        vel += curlForce;
+        vel += norm * 30.0 * uDeltaTime;
+        vel += curlForce * 50.0 * uDeltaTime;
 
         newPos.xyz += vel * uDeltaTime;
 

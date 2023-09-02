@@ -17,10 +17,18 @@ void main() {
     vec3 nextPos = texture(tPosition, vec2(vUv.x + uTexelSize.x, vUv.y)).xyz;
     vec3 prevPos = texture(tPosition, vec2(vUv.x - uTexelSize.x, vUv.y)).xyz;
 
-    if(vUv.x < 1.0 - uTexelSize.x) {
-        tangent = normalize(nextPos - currentPos);
+//    if(vUv.x < uTexelSize.x) {
+//        tangent = normalize(nextPos - currentPos);
+//    } else if(vUv.x > (1.0 - uTexelSize.x)) {
+//        tangent = normalize(currentPos - prevPos);
+//    } else {
+//        tangent = normalize(nextPos - prevPos);
+//    }
+
+    if(vUv.x < (1.0 - uTexelSize.x)) {
+        tangent = normalize(currentPos - nextPos);
     } else {
-        tangent = normalize(currentPos - prevPos);
+        tangent = normalize(prevPos - nextPos);
     }
 
     data = vec4(tangent, 1.0);

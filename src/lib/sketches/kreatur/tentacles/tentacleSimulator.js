@@ -195,7 +195,11 @@ export default class TentacleSimulator {
                     value: this.restLength
                 },
                 uStiffness: {
-                    value: 0.5
+                    //value: 1.0
+                    value: 2.0
+                },
+                uOrigin: {
+                    value: new Vec3()
                 },
                 uTexelSize: {
                     value: new Vec2(1.0 / this.segmentCountTentacleCount.x, 1.0/this.segmentCountTentacleCount.y)
@@ -278,8 +282,9 @@ export default class TentacleSimulator {
         this.gl.renderer.render({scene: this.predictPositionProgram, target: this.positionBuffer});
     }
 
-    solveConstraints({inputPos, interacting = false} = {}) {
+    solveConstraints({inputPos, interacting = false, bodyPos} = {}) {
         this.constrainCollideProgram.program.uniforms.tPosition.value = this.positionBuffer.textures[1];
+        this.constrainCollideProgram.program.uniforms.uOrigin.value.copy(bodyPos);
         if(inputPos) this.constrainCollideProgram.program.uniforms.uInputPos.value.copy(inputPos);
         this.constrainCollideProgram.program.uniforms.uApplyInput.value = interacting ? 1.0 : 0.0;
         this.gl.renderer.render({scene: this.constrainCollideProgram, target: this.iterationBuffer});
@@ -305,7 +310,7 @@ export default class TentacleSimulator {
 
         for(let i = 0; i < this.subStepCount; i++) {
             this.predictPositions({inputPos, interacting, bodyPos});
-            this.solveConstraints({inputPos, interacting});
+            this.solveConstraints({inputPos, interacting, bodyPos});
             this.updateVelocity();
         }
 

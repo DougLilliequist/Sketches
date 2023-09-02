@@ -13,8 +13,9 @@ export default class Creature extends Transform {
 
         this.tentacleMesh = new TentacleMesh(this.gl, {
             rootPositions: this.body.rootPositions,
-            resolutionCount: new Vec2(128, this.body.rootPositions.length),
-            tentacleResolution: 5
+            // resolutionCount: new Vec2(125, this.body.rootPositions.length),
+            resolutionCount: new Vec2(256, this.body.rootPositions.length),
+            tentacleResolution: 8
         })
 
         this.addChild(this.tentacleMesh);

@@ -1,6 +1,17 @@
-import {Renderer, Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
+import {Renderer, Camera, Transform, Orbit, Vec3, Vec2, RenderTarget} from 'ogl';
 import Body from "$lib/sketches/kreatur/Body/Body.js";
 import Creature from "$lib/sketches/kreatur/Creature.js";
+import PostProcessing from "$lib/sketches/kreatur/post/PostProcessing.js";
+import FogPass from "$lib/sketches/kreatur/post/worldPosReconstruct/FogPass.js";
+
+/**
+ * TODO:
+ * - rename files (even though the knowledge comes from me...)
+ * - work on body shader
+ * - tweak pane params
+ * - post FX
+ *
+ */
 
 export class kreatur {
     constructor({el}) {
@@ -48,6 +59,27 @@ export class kreatur {
         this.creature = new Creature(this.gl);
         this.scene.addChild(this.creature);
 
+        this.initWorldPosCaptureQuad();
+        this.initPostPass();
+
+    }
+
+    initWorldPosCaptureQuad() {
+
+        this.fogPass = new FogPass(this.gl, this.camera);
+
+    }
+
+    initPostPass() {
+
+        this.basePass = new RenderTarget(this.gl, {
+            width: this.gl.canvas.clientWidth,
+            height: this.gl.canvas.clientHeight,
+            depthTexture: true
+        });
+
+        this.post = new PostProcessing(this.gl);
+
     }
 
     render({
@@ -59,6 +91,7 @@ export class kreatur {
         this.renderer.render({
             scene,
             camera,
+            target,
             clear
         });
     }
@@ -77,8 +110,15 @@ export class kreatur {
         this.render({
             scene: this.scene,
             camera: this.camera,
+            target: this.basePass,
             clear: true
         });
+
+        this.fogPass.update({camera: this.camera, depth: this.basePass.depthTexture, color: this.basePass.texture, dt: this.gl.dt});
+
+        // this.render({scene: this.fogPass});
+
+        this.post.render({scene: this.fogPass, depth: this.basePass.depthTexture, dt: this.gl.dt});
 
     }
 

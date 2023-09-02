@@ -15,9 +15,13 @@ void main() {
     vec3 halfV = normalize(lightDir + eye);
 
     float halfLambert = dot(lightDir, vNormal) * 0.5 + 0.5;
-    float spec = pow(max(0.0, dot(halfV, vNormal)), 42.0);
+    float spec = pow(max(0.0, dot(halfV, vNormal)), 8.0);
 
+//    gl_FragColor = vec4(vec3(halfLambert * 0.8 + spec * 0.2), 1.0);
+//    gl_FragColor = vec4(vec3(halfLambert * 0.05 + spec * 0.95), 1.0);
     gl_FragColor = vec4(vec3(halfLambert * 0.05 + spec * 0.95), 1.0);
-    gl_FragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
+//    gl_FragColor = vec4(vec3(halfLambert * 0.7 + spec * 0.3), 1.0);
+//    gl_FragColor = vec4(vec3(spec), 1.0);
+//    gl_FragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
 
 }

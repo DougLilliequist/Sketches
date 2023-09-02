@@ -24,11 +24,11 @@ export default class TentacleMesh extends Mesh {
 
     initCylinder() {
 
-        const vertexCount = this.resolutionCount.x * this.tentacleResolution;
+        const vertexCount = this.resolutionCount.y * this.resolutionCount.x * this.tentacleResolution;
 
         //note: no need for normals as they will be derived when calculating the local vertices
-        const positionData = new Float32Array(this.resolutionCount.y * vertexCount * 4);
-        const uvData = new Float32Array(this.resolutionCount.y * vertexCount * 2);
+        const positionData = new Float32Array(vertexCount * 4);
+        const uvData = new Float32Array(vertexCount * 2);
 
         const TAU = Math.PI * 2;
 
@@ -41,7 +41,7 @@ export default class TentacleMesh extends Mesh {
             //iterate through each segment..
             for(let x = 0; x < this.resolutionCount.x; x++) {
 
-                const phase = x / (this.resolutionCount.x - 1);
+                const phase = x / Math.max(1.0, (this.resolutionCount.x - 1));
 
                 //generate vertices around each segment...
                 for(let i = 0; i < this.tentacleResolution; i++) {
@@ -62,47 +62,42 @@ export default class TentacleMesh extends Mesh {
 
         //generate indicies...
         const indexedVertexCount = this.resolutionCount.y * (this.resolutionCount.x - 1) * this.tentacleResolution * 6;
-
         const indexData = new Uint32Array(indexedVertexCount);
         let indexDataIterator = 0;
 
         for(let y = 0; y < this.resolutionCount.y; y++) {
 
-            let indexOffset = y * this.resolutionCount.x * this.tentacleResolution;
+            let tentacleStartIndex = y * (this.resolutionCount.x) * this.tentacleResolution;
+            let index = 0;
 
             for(let x = 0; x < this.resolutionCount.x - 1; x++) {
-
-                let segmentOffset = (x * (this.tentacleResolution - 1)) + indexOffset;
-
-                let segmentIndexOffset = 0;
-
                 for(let i = 0; i < this.tentacleResolution - 1; i++) {
 
-                    indexData[indexDataIterator++] = segmentOffset + i + 1;
-                    indexData[indexDataIterator++] = segmentOffset + i + this.tentacleResolution + 1;
-                    indexData[indexDataIterator++] = segmentOffset + i;
+                    indexData[indexDataIterator++] = tentacleStartIndex + index + 1;
+                    indexData[indexDataIterator++] = tentacleStartIndex + index + this.tentacleResolution + 1;
+                    indexData[indexDataIterator++] = tentacleStartIndex + index;
 
-                    indexData[indexDataIterator++] = segmentOffset + i + this.tentacleResolution + 1;
-                    indexData[indexDataIterator++] = segmentOffset + i + this.tentacleResolution;
-                    indexData[indexDataIterator++] = segmentOffset + i;
+                    indexData[indexDataIterator++] = tentacleStartIndex + index + this.tentacleResolution + 1;
+                    indexData[indexDataIterator++] = tentacleStartIndex + index + this.tentacleResolution;
+                    indexData[indexDataIterator++] = tentacleStartIndex + index;
 
-                    segmentIndexOffset++;
+                    index++;
 
                 }
 
-                indexData[indexDataIterator++] = segmentOffset + this.tentacleResolution - (segmentIndexOffset + 1);
-                indexData[indexDataIterator++] = segmentOffset + segmentIndexOffset + 1;
-                indexData[indexDataIterator++] = segmentOffset + segmentIndexOffset;
+                indexData[indexDataIterator++] = (tentacleStartIndex + index + 1) - this.tentacleResolution;
+                indexData[indexDataIterator++] = tentacleStartIndex + index + 1;
+                indexData[indexDataIterator++] = tentacleStartIndex + index;
 
-                indexData[indexDataIterator++] = segmentOffset + segmentIndexOffset + 1;
-                indexData[indexDataIterator++] = segmentOffset + segmentIndexOffset + this.tentacleResolution;
-                indexData[indexDataIterator++] = segmentOffset + segmentIndexOffset;
+                indexData[indexDataIterator++] = tentacleStartIndex + index + 1;
+                indexData[indexDataIterator++] = tentacleStartIndex + index + this.tentacleResolution;
+                indexData[indexDataIterator++] = tentacleStartIndex + index;
+
+                index++;
 
             }
 
         }
-
-        console.log(indexData);
 
         this.geometry = new Geometry(this.gl, {
             position: {
@@ -127,7 +122,7 @@ export default class TentacleMesh extends Mesh {
                     value: new Texture(this.gl)
                 },
                 uRadius: {
-                    value: 0.03
+                    value: 0.05
                 },
                 uTexelSize: {
                     value: new Vec2(1.0/this.resolutionCount.x, 1.0/this.resolutionCount.y)
