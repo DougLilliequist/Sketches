@@ -68,7 +68,7 @@ float calcShadow(vec4 shadowCoord) {
 void main() {
 
     vec3 eye = normalize(cameraPosition - vPos);
-    vec3 light = vec3(0.0, 10.0, 0.0);
+    vec3 light = vec3(3.0, 10.0, 5.0);
     vec3 lightDir = normalize(light);
 //    vec3 halfV = normalize(lightDir + eye);
 
@@ -79,22 +79,26 @@ void main() {
 
     vec3 viewDir = normalize(vMvPos.xyz);
     vec2 matcapCoord = matcap(viewDir, vViewNormal);
-    vec3 matcapLight = texture2D(tMatMap, matcapCoord).yyy;
+    vec3 matcapLight = texture2D(tMatMap, matcapCoord).xxx;
 //    matcapLight = pow(matcapLight, 1.0);
 
 
-    vec3 totalLight = halfLambert * 0.4 + ambientLight * 0.4 + matcapLight * 0.2;
+    vec3 totalLight = halfLambert * 0.3 + ambientLight * 0.4 + matcapLight * 0.3;
     float shadow = calcShadow(vShadowCoord);
     totalLight *= mix(shadow, 1.0, 0.25);
 
-//    float velocityPhase = dot(vVelocity, vVelocity) / (7.0 * 7.0);
-    float velocityPhase = length(vVelocity) / 5.0;
+    float velocityPhase = dot(vVelocity, vVelocity) / (7.0 * 7.0);
+//    float velocityPhase = length(vVelocity) / 8.0;
+    velocityPhase = smoothstep(0.0, 1.0, velocityPhase);
 
-    float targetPhase = 1.0 - abs(fract((uTime * mix(0.1, 1.0, vData.y)) + velocityPhase * 0.5) - vUv.x);
-    targetPhase = pow(targetPhase, 2.0);
-    targetPhase = smoothstep(0.0, 1.0, targetPhase);
+//    float targetPhase = 1.0 - abs(fract((uTime * mix(0.8, 1.0, vData.y)) + velocityPhase * 0.3) - vUv.x);
+//    float targetPhase = 1.0 - abs((velocityPhase - vUv.x);
+//    targetPhase = pow(targetPhase, 32.0);
+//    targetPhase = smoothstep(0.0, 1.0, targetPhase);
 
-    vec3 col = mix(vec3(0.93), clamp(vec3(0.1, 0.3, 0.98) + (velocityPhase*1.0), 0.0, 1.0), targetPhase);
+    vec3 col = mix(vec3(0.93), clamp(vec3(0.1, 0.3, 0.98) + (velocityPhase*0.4), 0.0, 1.0), velocityPhase);
+//    vec3 col = mix(vec3(0.93), clamp(vec3(0.98, 0.1, 0.1) + (velocityPhase*0.01), 0.0, 1.0), velocityPhase);
+//    vec3 col = mix(vec3(0.1), clamp(vec3(0.98, 0.5, 0.938) * (1.0 + velocityPhase*0.01), 0.0, 1.0), velocityPhase);
 
 
     col *= totalLight;

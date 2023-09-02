@@ -49,7 +49,7 @@ void main() {
 
     vec3 normal = (biNormal * cos(position.x)) + (norm * sin(position.x));
 
-    float phase =  uv.x * 4.0 * (1.0 - uv.x) * mix(0.15, 1.0, data.x);
+    float phase =  uv.x * 4.0 * (1.0 - uv.x) * mix(0.3, 1.0, data.x);
     float radius = uRadius * phase;
     pos = segmentPos + (normal * radius);
 

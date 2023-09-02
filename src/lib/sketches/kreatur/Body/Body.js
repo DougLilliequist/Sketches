@@ -155,9 +155,13 @@ export default class Body extends Transform {
         const offset = Math.sin(t * 0.0001) * 0.5 + 0.5;
         const speed = 0.0015;
 
-        this.target.x = Math.cos(t * speed) * Math.sin((t * 0.0015) + 23123) * 4.0;
-        this.target.y = Math.sin(t * speed * 0.5) * Math.sin((t * 0.0015) + 12312.0) * 4;
-        this.target.z = Math.sin(t * speed) * Math.sin((t * 0.0015) + 9432.012) * 4.0;
+        this.target.x = Math.cos(t * speed) * (4.0 + (Math.sin((t * 0.0015) + 23123) * 0.5 + 0.5) * 2.0);
+        this.target.y = Math.sin(t * speed * 0.5) * (4 + (Math.cos((t * 0.0015) + 12312.0) * 0.5 + 0.5) * 2.0);
+        this.target.z = Math.sin(t * speed) * (4.0 + (Math.sin((t * 0.0015) + 9432.012) * 0.5 + 0.5) * 2.0);
+
+        // this.target.x = Math.cos(t * speed) * 4.0;
+        // this.target.y = Math.sin(t * speed * 0.5) * 4;
+        // this.target.z = Math.sin(t * speed) * 4.0;
 
         this.targetDebug.position = this.target;
     }
