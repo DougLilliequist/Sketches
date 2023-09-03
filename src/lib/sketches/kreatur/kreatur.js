@@ -26,12 +26,12 @@ export class kreatur {
             canvas: el,
             width: el.clientWidth,
             height: el.clientHeight,
-            antialias: true,
-            dpr: 1
+            antialias: false,
+            dpr: 1,
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.93;
+        const bg = 0.0;
         this.gl.clearColor(bg,bg,bg, 1.0);
 
         const {
@@ -75,7 +75,8 @@ export class kreatur {
         this.basePass = new RenderTarget(this.gl, {
             width: this.gl.canvas.clientWidth,
             height: this.gl.canvas.clientHeight,
-            depthTexture: true
+            depthTexture: true,
+            color: 2
         });
 
         this.post = new PostProcessing(this.gl);
@@ -114,11 +115,11 @@ export class kreatur {
             clear: true
         });
 
-        this.fogPass.update({camera: this.camera, depth: this.basePass.depthTexture, color: this.basePass.texture, dt: this.gl.dt});
+        this.fogPass.update({camera: this.camera, depth: this.basePass.depthTexture, color: this.basePass.textures[0], dt: this.gl.dt});
 
         // this.render({scene: this.fogPass});
 
-        this.post.render({scene: this.fogPass, depth: this.basePass.depthTexture, dt: this.gl.dt});
+        this.post.render({scene: this.fogPass, depth: this.basePass.depthTexture, mask: this.basePass.textures[1], dt: this.gl.dt});
 
     }
 

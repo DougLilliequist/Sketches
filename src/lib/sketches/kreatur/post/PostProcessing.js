@@ -5,6 +5,7 @@ import screen from './screen.glsl?raw';
 import dither from './dither.glsl?raw';
 import blitVert from './blit.vert.glsl?raw';
 import blit from './blit.glsl?raw';
+import Glow from "$lib/sketches/kreatur/post/Glow/Glow.js";
 
 export default class PostProcessing {
 
@@ -14,6 +15,7 @@ export default class PostProcessing {
 
         this.initFxaaPass();
         this.initBlurPass();
+        this.initGlowPass();
         this.initFakeAtmospherePass();
         this.initDitherPass();
 
@@ -74,7 +76,7 @@ export default class PostProcessing {
 
         this.halfResBlit.addPass();
 
-        const scale = 0.25;
+        const scale = 0.5;
         this.blurPass = new Post(this.gl, {
             width: this.gl.canvas.clientWidth*scale,
             height: this.gl.canvas.clientHeight*scale,
@@ -82,7 +84,7 @@ export default class PostProcessing {
             // internalFormat:  this.gl.renderer.isWebgl2 ? this.gl.RGBA16F : this.gl.RGBA,
         });
 
-        let stepCount = 8;
+        let stepCount = 5;
         for(let i = 0; i < stepCount; i++) {
 
             const uniforms = {
@@ -107,17 +109,10 @@ export default class PostProcessing {
 
         }
 
-        // const ditherUniforms = {
-        //     _Time: {
-        //         value: 0.0
-        //     }
-        // }
+    }
 
-        // this.blurPass.addPass({
-        //     uniforms: ditherUniforms,
-        //     fragment: require('./dither.glsl')
-        // });
-
+    initGlowPass() {
+        this.glow = new Glow(this.gl, {passCount: 5});
     }
 
     initFakeAtmospherePass() {
@@ -130,6 +125,9 @@ export default class PostProcessing {
 
         const uniforms = {
             _Blur: {
+                value: null
+            },
+            tGlow: {
                 value: null
             },
             _Depth: {
@@ -167,7 +165,7 @@ export default class PostProcessing {
 
     }
 
-    render({scene, depth, dt}) {
+    render({scene, depth, dt, mask}) {
 
         // this.blitPass.render({scene});
         this.fxaaPass.render({scene});
@@ -180,20 +178,19 @@ export default class PostProcessing {
         });
         this.blurPass.render({texture: this.halfResBlit.uniform});
 
+        this.glow.render({inputTexture: mask});
+
         this.fakeAtmospherePass.passes[0].program.uniforms._Blur = this.blurPass.uniform;
+        this.fakeAtmospherePass.passes[0].program.uniforms.tGlow.value = this.glow.output.texture;
         this.fakeAtmospherePass.passes[0].program.uniforms._Depth.value = depth;
         this.fakeAtmospherePass.passes[0].program.uniforms._Time.value += dt;
-        // this.fakeAtmospherePass.render({scene: this.fxaaPass.passes[0].mesh});
         this.fakeAtmospherePass.render({scene: this.fxaaPass.passes[0].mesh});
-
-        // this.ditherPass.passes[0].program.uniforms._Time.value += dt;
-        // this.ditherPass.render({scene: this.fakeAtmospherePass.passes[0].mesh});
 
     }
 
     onResize({width, height}) {
         this.fxaaPass.resize({width, height});
-        this.blurPass.resize({width: width*0.25, height: height*0.25});
+        this.blurPass.resize({width: width*0.5, height: height*0.5});
         this.fakeAtmospherePass.resize({width, height});
         this.ditherPass.resize({width, height})
 

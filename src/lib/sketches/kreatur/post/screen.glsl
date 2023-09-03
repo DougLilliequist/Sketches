@@ -1,6 +1,7 @@
 precision highp float;
 
 uniform sampler2D tMap;
+uniform sampler2D tGlow;
 uniform sampler2D _Base;
 uniform sampler2D _Blur;
 uniform sampler2D _Depth;
@@ -10,7 +11,7 @@ uniform float _Time;
 varying vec2 vUv;
 
 //https://www.geeks3d.com/20091216/geexlab-how-to-visualize-the-depth-buffer-in-glsl/
-float LinearizeDepth(float depth) 
+float LinearizeDepth(float depth)
 {
     float z = depth;
     return (2.0 * 0.1) / (100.0 + 0.1 - z * (100.0 - 0.1));
@@ -40,8 +41,8 @@ void main() {
 
     vec3 layerA = texture2D(tMap, vUv).xyz;
     vec3 layerB = texture2D(_Blur, vUv).xyz;
-
-    vec3 screen = screenBlend(layerA, layerB);
+    vec3 glow = texture2D(tGlow, vUv).xyz;
+    vec3 screen = screenBlend(layerA, layerB + glow);
 
     vec3 hash1 = hash32(gl_FragCoord.xy+fract(_Time)*1300.0);
     vec3 hash2 = hash32(gl_FragCoord.yx+fract(_Time+0.3123)*1300.0);

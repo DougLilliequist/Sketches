@@ -193,6 +193,7 @@ export default class TentacleMesh extends Mesh {
         });
 
         this.shadowCamera.position.set(3.0, 10.0, 5.0);
+        // this.shadowCamera.position.set(0.0, 10.0, 0.0);
         this.shadowCamera.lookAt([0.0, 0.0, 0.0]);
 
         this.shadowPass = new Shadow(this.gl, {light: this.shadowCamera, width: 1024, height: 1024});

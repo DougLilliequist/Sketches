@@ -1,3 +1,4 @@
+#version 300 es
 precision highp float;
 
 uniform sampler2D tMatMap;
@@ -10,18 +11,44 @@ uniform float uShadowTexelSize;
 
 uniform float uTime;
 
-varying vec3 vPos;
-varying vec3 vMvPos;
+in vec3 vPos;
+in vec3 vMvPos;
 
-varying vec3 vNormal;
-varying vec3 vViewNormal;
-varying vec3 vVelocity;
-varying vec4 vData;
-varying vec4 vShadowCoord;
-varying vec3 vWorldNormal;
+in vec3 vNormal;
+in vec3 vViewNormal;
+in vec3 vVelocity;
+in vec4 vData;
+in vec4 vShadowCoord;
+in vec3 vWorldNormal;
+in vec3 vUnNormalNormal;
 
+in vec2 vUv;
 
-varying vec2 vUv;
+out vec4 color[2];
+
+vec3 sinNoise(vec3 seed, float fallOff, int octaves) {
+
+    vec3 noise = vec3(0.0);
+
+    float amp = 1.0;
+    float freq = 1.0;
+
+    vec3 s = seed;
+
+    mat3 mat = mat3(0.563152, 0.495996, 0.660945, -0.660945, 0.750435, 0.0, -0.495996, -0.436848, 0.750435);
+
+    for(int i = 0; i < octaves; i++) {
+        s = mat * s.yzx;
+        noise += sin(s.yzx * freq) * amp;
+        amp *= fallOff;
+        freq /= fallOff;
+        s += noise;
+
+    }
+
+    return noise;
+}
+
 
 vec2 matcap(vec3 eye, vec3 normal) {
     vec3 reflected = reflect(eye, normal);
@@ -35,7 +62,7 @@ float unpackRGBA (vec4 v) {
 
 float sampleShadow(vec2 coord, float depth) {
 
-    float occlusion = unpackRGBA(texture2D(tShadow, coord));
+    float occlusion = unpackRGBA(texture(tShadow, coord));
     if(occlusion < depth -  0.0001) return 0.0;
     return 1.0;
 }
@@ -54,7 +81,7 @@ float calcShadow(vec4 shadowCoord) {
         for(int x = -1; x <= 1; x++) {
 
             vec2 offset = vec2(x, y);
-            vec2 jitter = (texture2D(tBlueNoise, (gl_FragCoord.xy + offset)/256.0).xy * 2.0 - 1.0);
+            vec2 jitter = (texture(tBlueNoise, (gl_FragCoord.xy + offset)/256.0).xy * 2.0 - 1.0);
             totalShadow += sampleShadow(coord.xy + (offset + jitter) * uShadowTexelSize, coord.z);
 
         }
@@ -72,38 +99,41 @@ void main() {
     vec3 lightDir = normalize(light);
 //    vec3 halfV = normalize(lightDir + eye);
 
-    float halfLambert = dot(lightDir, normalize(vWorldNormal)) * 0.5 + 0.5;
+    float halfLambert = dot(lightDir, vNormal) * 0.5 + 0.5;
 //    float spec = pow(max(0.0, dot(halfV, vNormal)), 24.0);
-
     float ambientLight = vNormal.y * 0.5 + 0.5;
 
     vec3 viewDir = normalize(vMvPos.xyz);
     vec2 matcapCoord = matcap(viewDir, vViewNormal);
-    vec3 matcapLight = texture2D(tMatMap, matcapCoord).xxx;
+    vec3 matcapLight = texture(tMatMap, matcapCoord).xxx;
 //    matcapLight = pow(matcapLight, 1.0);
 
 
-    vec3 totalLight = halfLambert * 0.3 + ambientLight * 0.4 + matcapLight * 0.3;
+    vec3 totalLight = halfLambert * 0.75 + ambientLight * 0.1 + matcapLight * 0.15;
     float shadow = calcShadow(vShadowCoord);
-    totalLight *= mix(shadow, 1.0, 0.25);
+    totalLight *= mix(shadow, 1.0, 0.35);
 
-    float velocityPhase = dot(vVelocity, vVelocity) / (7.0 * 7.0);
-//    float velocityPhase = length(vVelocity) / 8.0;
+//    float velocityPhase = dot(vVelocity, vVelocity) / (7.0 * 7.0);
+    float velocityPhase = length(vVelocity) / 20.0;
     velocityPhase = smoothstep(0.0, 1.0, velocityPhase);
 
-//    float targetPhase = 1.0 - abs(fract((uTime * mix(0.8, 1.0, vData.y)) + velocityPhase * 0.3) - vUv.x);
-//    float targetPhase = 1.0 - abs((velocityPhase - vUv.x);
-//    targetPhase = pow(targetPhase, 32.0);
-//    targetPhase = smoothstep(0.0, 1.0, targetPhase);
+    //add extra brightness based on the inverse of normals length (smaller radius = brighter, larger radius = dimmer)
+    float normalLen = length(vUnNormalNormal);
+    float radiusK = (1.0 / normalLen) * 0.001;
 
-    vec3 col = mix(vec3(0.93), clamp(vec3(0.1, 0.3, 0.98) + (velocityPhase*0.4), 0.0, 1.0), velocityPhase);
-//    vec3 col = mix(vec3(0.93), clamp(vec3(0.98, 0.1, 0.1) + (velocityPhase*0.01), 0.0, 1.0), velocityPhase);
-//    vec3 col = mix(vec3(0.1), clamp(vec3(0.98, 0.5, 0.938) * (1.0 + velocityPhase*0.01), 0.0, 1.0), velocityPhase);
+//    vec3 sNoise = sinNoise((vPos * 2.0) + uTime * 0.5, 0.731, 4);
+//    sNoise = sNoise * 0.5 + 0.5;
+//    sNoise = mix(vec3(0.93, 0.54, 0.1), sNoise, ((sNoise.x + sNoise.y + sNoise.z) * 0.333));
 
+    vec3 glowCol = smoothstep(vec3(0.0), vec3(1.0), vec3(0.1, 0.3, 0.98) + (velocityPhase*0.5)) + radiusK;
+//    vec3 glowCol = smoothstep(vec3(0.0), vec3(1.0), vec3(0.98, 0.3, 0.1) + (velocityPhase*0.5)) + radiusK;
+//    vec3 glowCol = smoothstep(vec3(0.0), vec3(1.0), sNoise + (velocityPhase*0.01)) + radiusK;
+    //vec3 glowCol = clamp(vec3(0.99, 0.13, 0.1) * 0.9 + (velocityPhase*0.1), 0.0, 1.0);
+//    vec3 glowCol = clamp(sNoise + (velocityPhase*0.01), 0.0, 1.0);
 
+    vec3 col = mix(vec3(0.93), glowCol, velocityPhase);
     col *= totalLight;
 
-    gl_FragColor = vec4(col, 1.0);
-//    gl_FragColor = vec4(vec3(velocityPhase), 1.0);
-
+    color[0] = vec4(col, 1.0);
+    color[1] = vec4(mix(vec3(0.0), glowCol, velocityPhase), 1.0);
 }

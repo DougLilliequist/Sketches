@@ -15,36 +15,32 @@
                     float lM  = dot(texture2D(tex, uv).rgb, l);
                     float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
                     float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
-                    
+
                     vec2 dir = vec2(
                         -((lNW + lNE) - (lSW + lSE)),
                         ((lNW + lSW) - (lNE + lSE))
                     );
-                    
+
                     float dirReduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
                     float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
                     dir = min(vec2(8, 8), max(vec2(-8, -8), dir * rcpDirMin)) * pixel;
-                    
-                    vec3 rgbA = 0.5 * (
-                        texture2D(tex, uv + dir * (1.0 / 3.0 - 0.5)).rgb +
-                        texture2D(tex, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
-                    vec3 rgbB = rgbA * 0.5 + 0.25 * (
-                        texture2D(tex, uv + dir * -0.5).rgb +
-                        texture2D(tex, uv + dir * 0.5).rgb);
-                    float lB = dot(rgbB, l);
+
+                    vec4 rgbA = 0.5 * (
+                        texture2D(tex, uv + dir * (1.0 / 3.0 - 0.5)) +
+                        texture2D(tex, uv + dir * (2.0 / 3.0 - 0.5)));
+                    vec4 rgbB = rgbA * 0.5 + 0.25 * (
+                        texture2D(tex, uv + dir * -0.5) +
+                        texture2D(tex, uv + dir * 0.5));
+                    float lB = dot(rgbB.xyz, l);
                     return mix(
-                        vec4(rgbB, 1),
-                        vec4(rgbA, 1),
+                        rgbB,
+                        rgbA,
                         max(sign(lB - lMin), 0.0) * max(sign(lB - lMax), 0.0)
                     );
                 }
 
-                
+
                 void main() {
-                    vec4 raw = texture2D(tMap, vUv);
                     vec4 aa = fxaa(tMap, vUv, _Resolution);
-                    // Split screen in half to show side-by-side comparison
                     gl_FragColor = aa;
-                    // Darken left side a tad for clarity
-                    // gl_FragColor -= step(vUv.x, 0.5) * 0.1;
                 }

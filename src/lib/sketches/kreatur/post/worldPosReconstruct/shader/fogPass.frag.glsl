@@ -53,7 +53,7 @@ void main() {
     }
 
     float dist = length(worldPos);
-    float fog = smoothstep(50.0, 100.0, dist);
+    float fog = smoothstep(0.0, 7.0, dist);
 
     #else
 
@@ -62,14 +62,12 @@ void main() {
     #endif
 
 //    col = mix(col, vec3(0.7, 0.8, 0.93), fog);
-    col = mix(col, vec3(0.83, 0.88, 0.98), fog);
+    col = mix(col, vec3(0.7, 0.7, 0.8), fog);
 
     vec3 hash1 = hash32(gl_FragCoord.xy+fract(_Time)*1300.0);
     vec3 hash2 = hash32(gl_FragCoord.yx+fract(_Time+0.3123)*1300.0);
     vec3 dither = ((hash1) + (hash2-1.0)) / 255.0;
 
     gl_FragColor = vec4(col + dither, 1.0);
-//    gl_FragColor = vec4(vec3(dotProd)+ dither, 1.0);
-//     gl_FragColor = vec4(worldPos, 1.0);
 
 }
