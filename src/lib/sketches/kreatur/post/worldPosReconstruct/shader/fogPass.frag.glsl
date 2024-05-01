@@ -39,21 +39,22 @@ void main() {
     float depth01 = (depth/_Far);
     vec3 viewRay = vViewRay * depth01;
     vec3 worldPos = viewRay + _CameraWorldPos;
-    vec3 lightPos = vec3(10.0, 10.0, 0.0);
-    float distToLight = length(lightPos - worldPos);
+    vec3 lightPos = vec3(3.0, 10.0, 5.0);
+    float distToLight = length(lightPos - vec3(worldPos.x, 0.0, worldPos.z));
 
     float dist01 = distToLight / _Far;
-    float phase = 0.0;
+//    float phase = 0.0;
 
-    float dotProd = 0.0;
-    if(depth <= _Far - 0.1) {
-        phase =  1.0 - smoothstep(0.0, 0.1, abs(fract(_Time * 0.5 - dist01) * 2.0 - 1.0));
-        dotProd = dot(normalize(lightPos-worldPos), vec3(0.0, 1.0, 0.0));
+//    float dotProd = 0.0;
+//    if(depth <= _Far - 0.1) {
+//        phase =  1.0 - smoothstep(0.0, 0.1, abs(fract(_Time * 0.5 - dist01) * 2.0 - 1.0));
+//        dotProd = dot(normalize(lightPos-worldPos), vec3(0.0, 1.0, 0.0));
+//
+//    }
 
-    }
-
+//    float dist = length(worldPos);
     float dist = length(worldPos);
-    float fog = smoothstep(0.0, 7.0, dist);
+    float fog = smoothstep(0.0, 8.0, dist);
 
     #else
 
@@ -62,7 +63,8 @@ void main() {
     #endif
 
 //    col = mix(col, vec3(0.7, 0.8, 0.93), fog);
-    col = mix(col, vec3(0.7, 0.7, 0.8), fog);
+    col = mix(col, vec3(0.7, 0.8, 0.97), fog);
+//    col = mix(col, vec3(0.7, 0.7, 0.8), fog);
 
     vec3 hash1 = hash32(gl_FragCoord.xy+fract(_Time)*1300.0);
     vec3 hash2 = hash32(gl_FragCoord.yx+fract(_Time+0.3123)*1300.0);

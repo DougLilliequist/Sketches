@@ -42,7 +42,7 @@ void main() {
         float mag = length(dir);
 
         float restLen = uRestLength.x * uStiffness;
-        if(mag > restLen) {
+        if(mag > 0.0) {
             ftlCorrection = (dir/mag) * (mag - restLen);
             ftlCorrection /= (2.0 + compliance);
             correction.xyz += ftlCorrection;

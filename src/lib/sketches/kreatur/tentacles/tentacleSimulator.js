@@ -170,6 +170,8 @@ export default class TentacleSimulator {
 
         });
 
+        console.log(1.0 / this.segmentCountTentacleCount.x);
+
         this.predictPositionProgram = new Mesh(this.gl, {geometry, program: predictPositionShader});
 
         const copyDataShader = new Program(this.gl, {

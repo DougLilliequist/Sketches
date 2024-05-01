@@ -40,7 +40,7 @@ void main() {
     upSample += (a+c+g+i);
     upSample *= 1.0 / 16.0;
 
-    vec3 next = texture2D(tNext, vUv).xyz * uAdd;
+    vec3 next = texture2D(tNext, vUv).xyz;
 
     gl_FragColor = vec4(upSample + next, 1.0);
 }

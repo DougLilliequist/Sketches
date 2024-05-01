@@ -44,6 +44,6 @@ void main() {
     float b = texture2D(tB, vUv).x;
     float bSq = b * b;
     float res = a + (diffuse(tA) - (a * bSq) + uFeed * (1.0 - a)) * uDt;
-    gl_FragColor = vec4(vec3(res), 1.0);
+    gl_FragColor = vec4(vec3(1.0 - res), 1.0);
 
 }

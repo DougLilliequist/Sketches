@@ -54,7 +54,6 @@ float calcOcclusion(vec3 normal, vec3 pos) {
 
         float sampledDepth = texture2D(tPositions, offset.xy).z;
         float depthFix = smoothstep(0.0, 1.0, uSampleRadius / abs(sampledDepth - pos.z));
-
         if(sampledDepth >= samplePos.z + uBias) occlusion += 1.0 * depthFix; //might cause funky artefacts due to OGL's decisions on basis
     }
 

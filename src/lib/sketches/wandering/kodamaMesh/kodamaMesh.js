@@ -8,7 +8,7 @@ export default class KodamaMesh extends Transform {
     constructor(gl, {
         gltf
     }) {
-        
+
         super(gl);
 
         this.gl = gl;
@@ -60,7 +60,7 @@ export default class KodamaMesh extends Transform {
         const boundsMax = new Vec3();
         const boundsCenter = new Vec3();
         const boundsScale = new Vec3();
-        
+
         console.log(this.gltf.meshes);
         this.gltf.meshes.forEach((group) => {
             group.primitives.forEach((mesh) => {
@@ -157,8 +157,8 @@ export default class KodamaMesh extends Transform {
         //     this.currentPos.add(new Vec3(0.0, 0.0, 0.0).sub(this.currentPos).scale(0.01));
         // }
         // this.position.set(Math.cos(time*0.005)*3.0, 0.0, Math.sin(time*0.005)*3.0);
-        this.Mesh.program.uniforms._Forward.value.copy(this.currentPos).sub(this.prevPos).normalize();
-        this.Mesh.program.uniforms._WorldPosOffset.value.copy(this.currentPos);
+        this.Mesh?.program.uniforms._Forward.value.copy(this.currentPos).sub(this.prevPos).normalize();
+        this.Mesh?.program.uniforms._WorldPosOffset.value.copy(this.currentPos);
 
     }
 
@@ -171,10 +171,10 @@ export default class KodamaMesh extends Transform {
     }
 
     update({time, deltaTime}) {
-        
+
         this.wander({time});
-        this.animate();
-        
+        // this.animate();
+
     }
 
     get Mesh() {

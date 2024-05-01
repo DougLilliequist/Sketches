@@ -29,6 +29,7 @@ export default class TentacleMesh extends Mesh {
     initCylinder() {
 
         const vertexCount = this.resolutionCount.y * this.resolutionCount.x * this.tentacleResolution;
+        console.log(vertexCount);
 
         //note: no need for normals as they will be derived when calculating the local vertices
         const positionData = new Float32Array(vertexCount * 4);
@@ -78,6 +79,9 @@ export default class TentacleMesh extends Mesh {
 
         //generate indicies...
         const indexedVertexCount = this.resolutionCount.y * (this.resolutionCount.x - 1) * this.tentacleResolution * 6;
+        console.log(this.resolutionCount.y);
+        console.log(this.resolutionCount.y);
+        console.log(this.resolutionCount.y);
         const indexData = new Uint32Array(indexedVertexCount);
         let indexDataIterator = 0;
 
@@ -114,7 +118,7 @@ export default class TentacleMesh extends Mesh {
             }
 
         }
-
+        console.log(indexData.length);
         this.geometry = new Geometry(this.gl, {
             position: {
                 size: 4,
@@ -132,6 +136,8 @@ export default class TentacleMesh extends Mesh {
                 data: indexData
             }
         });
+
+        console.log(this.geometry);
 
         const matcap = this.loadTexture('./src/lib/sketches/kreatur/assets/steel.jpg');
         const tentacleColors = this.loadTexture('./src/lib/sketches/kreatur/assets/tentacleColors2.png')
@@ -196,7 +202,7 @@ export default class TentacleMesh extends Mesh {
         // this.shadowCamera.position.set(0.0, 10.0, 0.0);
         this.shadowCamera.lookAt([0.0, 0.0, 0.0]);
 
-        this.shadowPass = new Shadow(this.gl, {light: this.shadowCamera, width: 1024, height: 1024});
+        this.shadowPass = new Shadow(this.gl, {light: this.shadowCamera, width: 2048, height: 2048});
         this.shadowPass.add({mesh: this, vertex: vertexShadow, fragment: fragmentShadow});
         this.depthProgram.uniforms.tPosition = {value: this.data.positions};
         this.depthProgram.uniforms.tTangent = {value: this.data.tangents};

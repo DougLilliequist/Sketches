@@ -10,10 +10,10 @@ varying vec2 vUv;
 
 vec2 getGradient(sampler2D diffuse) {
 
-    float l = texture2D(diffuse, vUv + vec2(uStep * 2.0, 0.0)).y;
-    float r = texture2D(diffuse, vUv + vec2(-uStep* 2.0, 0.0)).y;
-    float t = texture2D(diffuse, vUv + vec2(0.0, uStep* 2.0)).y;
-    float b = texture2D(diffuse, vUv + vec2(0.0, -uStep* 2.0)).y;
+    float l = texture2D(diffuse, vUv + vec2(uStep * 2.0, 0.0)).x;
+    float r = texture2D(diffuse, vUv + vec2(-uStep* 2.0, 0.0)).x;
+    float t = texture2D(diffuse, vUv + vec2(0.0, uStep* 2.0)).x;
+    float b = texture2D(diffuse, vUv + vec2(0.0, -uStep* 2.0)).x;
 
     float dX = (l - r) * 0.5;
     float dY = (t - b) * 0.5;

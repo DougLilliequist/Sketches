@@ -81,7 +81,7 @@ float calcShadow(vec4 shadowCoord) {
         for(int x = -1; x <= 1; x++) {
 
             vec2 offset = vec2(x, y);
-            vec2 jitter = (texture(tBlueNoise, (gl_FragCoord.xy + offset)/256.0).xy * 2.0 - 1.0);
+            vec2 jitter = (texture(tBlueNoise, (gl_FragCoord.xy + offset)/256.0).xy - 0.5);
             totalShadow += sampleShadow(coord.xy + (offset + jitter) * uShadowTexelSize, coord.z);
 
         }
@@ -97,41 +97,31 @@ void main() {
     vec3 eye = normalize(cameraPosition - vPos);
     vec3 light = vec3(3.0, 10.0, 5.0);
     vec3 lightDir = normalize(light);
-//    vec3 halfV = normalize(lightDir + eye);
 
     float halfLambert = dot(lightDir, vNormal) * 0.5 + 0.5;
-//    float spec = pow(max(0.0, dot(halfV, vNormal)), 24.0);
     float ambientLight = vNormal.y * 0.5 + 0.5;
 
     vec3 viewDir = normalize(vMvPos.xyz);
     vec2 matcapCoord = matcap(viewDir, vViewNormal);
     vec3 matcapLight = texture(tMatMap, matcapCoord).xxx;
-//    matcapLight = pow(matcapLight, 1.0);
 
-
-    vec3 totalLight = halfLambert * 0.75 + ambientLight * 0.1 + matcapLight * 0.15;
+    vec3 totalLight = halfLambert * 0.85 + matcapLight * 0.15;
     float shadow = calcShadow(vShadowCoord);
-    totalLight *= mix(shadow, 1.0, 0.35);
+    totalLight *= mix(shadow, 1.0, 0.25);
 
-//    float velocityPhase = dot(vVelocity, vVelocity) / (7.0 * 7.0);
-    float velocityPhase = length(vVelocity) / 20.0;
+    float velocityPhase = length(vVelocity) / 30.0;
     velocityPhase = smoothstep(0.0, 1.0, velocityPhase);
 
     //add extra brightness based on the inverse of normals length (smaller radius = brighter, larger radius = dimmer)
     float normalLen = length(vUnNormalNormal);
     float radiusK = (1.0 / normalLen) * 0.001;
 
-//    vec3 sNoise = sinNoise((vPos * 2.0) + uTime * 0.5, 0.731, 4);
-//    sNoise = sNoise * 0.5 + 0.5;
-//    sNoise = mix(vec3(0.93, 0.54, 0.1), sNoise, ((sNoise.x + sNoise.y + sNoise.z) * 0.333));
+    vec3 sNoise = sinNoise((vPos * 3.0) + uTime * 0.25 + velocityPhase, 0.731, 4);
+    sNoise = sNoise * 0.5 + 0.5;
+    sNoise = mix(vec3(0.1, 0.3, 0.98), sNoise, 0.4 * ((sNoise.x + sNoise.y + sNoise.z) * 0.333));
+    vec3 glowCol = clamp(sNoise + (velocityPhase*0.4), 0.0, 1.0);
 
-    vec3 glowCol = smoothstep(vec3(0.0), vec3(1.0), vec3(0.1, 0.3, 0.98) + (velocityPhase*0.5)) + radiusK;
-//    vec3 glowCol = smoothstep(vec3(0.0), vec3(1.0), vec3(0.98, 0.3, 0.1) + (velocityPhase*0.5)) + radiusK;
-//    vec3 glowCol = smoothstep(vec3(0.0), vec3(1.0), sNoise + (velocityPhase*0.01)) + radiusK;
-    //vec3 glowCol = clamp(vec3(0.99, 0.13, 0.1) * 0.9 + (velocityPhase*0.1), 0.0, 1.0);
-//    vec3 glowCol = clamp(sNoise + (velocityPhase*0.01), 0.0, 1.0);
-
-    vec3 col = mix(vec3(0.93), glowCol, velocityPhase);
+    vec3 col = mix(vec3(0.88, 0.88, 0.93), glowCol, velocityPhase);
     col *= totalLight;
 
     color[0] = vec4(col, 1.0);

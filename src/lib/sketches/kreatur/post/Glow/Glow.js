@@ -66,9 +66,6 @@ export default class Glow {
                 tNext: {
                     value: new Texture(this.gl)
                 },
-                uAdd: {
-                    value: 0.0
-                },
                 uTexelSize: {
                     value: new Vec2(1.0, 1.0)
                 }
@@ -116,10 +113,9 @@ export default class Glow {
         for(let i = this.passCount - 1; i >= 0; i--) {
             this.upSampleProgram.program.uniforms.tMap.value = i === this.passCount - 1 ? this.passes[i].texture : this.passesUp[i + 1].texture;
             this.upSampleProgram.program.uniforms.tNext.value = this.passes[i].texture;
-            this.upSampleProgram.program.uniforms.uAdd.value = i === this.passCount - 1 ? 0 : 1;
 
-            const texelSizeX = i === this.passCount - 1 ? 1.0 / this.passes[i].texture.width : 1.0 / this.passes[i+1].width;
-            const texelSizeY = i === this.passCount - 1 ? 1.0 / this.passes[i].texture.height : 1.0 / this.passes[i+1].height;
+            const texelSizeX = i === this.passCount - 1 ? 1.0 / this.passes[i].texture.width : 1.0 / this.passesUp[i+1].width;
+            const texelSizeY = i === this.passCount - 1 ? 1.0 / this.passes[i].texture.height : 1.0 / this.passesUp[i+1].height;
 
             this.upSampleProgram.program.uniforms.uTexelSize.value.set(texelSizeX, texelSizeY);
             this.gl.renderer.render({scene: this.upSampleProgram, target: this.passesUp[i]});

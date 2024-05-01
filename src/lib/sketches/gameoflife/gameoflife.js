@@ -1,7 +1,7 @@
-import {Renderer, Camera, Transform, Orbit, Vec3, Vec2, GLTFLoader} from 'ogl';
-import KodamaMesh from './kodamaMesh/kodamaMesh.js';
+import {Renderer, Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
+import GameOfLifeSim from "$lib/sketches/gameoflife/GameOfLifeSim.js";
 
-export class wandering {
+export class gameoflife {
     constructor({el}) {
 
         this.init({el});
@@ -19,7 +19,7 @@ export class wandering {
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.93;
+        const bg = 0.0;
         this.gl.clearColor(bg,bg,bg, 1.0);
 
         const {
@@ -35,37 +35,17 @@ export class wandering {
         });
 
         this.camera.position.x = 0.0;
-        this.camera.position.y = 10.0;
-        this.camera.position.z = 10.0;
+        this.camera.position.y = 0.0;
+        this.camera.position.z = 5.0;
 
         this.controls = new Orbit(this.camera, {
-            target: new Vec3(0, 0, 0),
+            target: new Vec3(0, 0.0, 0),
         });
 
         this.scene = new Transform();
 
-        this.gltf;
-
-        const image = new Image();
-        image.crossOrigin = "*";
-        image.src = 'src/lib/sketches/wandering/assets/metallicvoxels.png';
-
-        // image.onload = () => console.log('IMAGE FOUND')
-
-        this.loadModel()
-
-    }
-
-    loadModel = async() => {
-
-        // this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/wandering/assets/kodamav2_no_material_small.gltf');
-        this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/wandering/assets/ragdollskeleton_experimenting.glb');
-        this.kodamaMesh = new KodamaMesh(this.gl, {
-            gltf: this.gltf
-        });
-
-        this.kodamaMesh.setParent(this.scene);
-        this.kodamaMesh.position.y -= 1.0;
+        this.sim = new GameOfLifeSim(this.gl);
+        this.scene.addChild(this.sim);
 
     }
 
@@ -89,8 +69,7 @@ export class wandering {
 
         this.controls.update();
 
-        if(this.kodamaMesh)
-        this.kodamaMesh.update({time, deltaTime});
+        this.sim.update(time);
 
         this.render({
             scene: this.scene,

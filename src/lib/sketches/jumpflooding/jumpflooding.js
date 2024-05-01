@@ -21,7 +21,7 @@ export class jumpflooding {
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.93;
+        const bg = 0.0;
         this.gl.clearColor(bg,bg,bg, 1.0);
 
         const {

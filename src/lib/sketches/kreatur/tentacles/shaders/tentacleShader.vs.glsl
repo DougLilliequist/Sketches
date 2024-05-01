@@ -33,6 +33,18 @@ out vec4 vShadowCoord;
 out vec3 vVelocity;
 out vec3 vUnNormalNormal;
 
+vec3 perturbNormals(vec3 roundedNormals, vec3 flatNormals, float chamferFactor) {
+    // Calculate the angle between the rounded normals and the flat normals
+    float angle = dot(roundedNormals, flatNormals);
+
+    // Use the chamferFactor to control the perturbation of the normals
+    vec3 perturbedNormals = mix(roundedNormals, flatNormals, smoothstep(0.0, 1.0, angle) * chamferFactor);
+
+    return normalize(perturbedNormals);
+}
+
+#define PI 3.14159265359
+
 void main() {
 
     vec3 pos = vec3(0.0);
@@ -50,10 +62,19 @@ void main() {
     vec3 biNormal = normalize(cross(tangent, norm));
 
     vec3 normal = (biNormal * cos(position.x)) + (norm * sin(position.x));
+    vec3 box = (biNormal * sign(cos(position.x))) + (norm * sign(sin(position.x)));
+
+    vec3 finalNormal = mix(box, normal, 0.2);
+
+    //vec3 perturbNorm = perturbNormals(normal, box, 0.9);
+//    vec3 finalNormal = mix(fin);
+
 
     float phase =  uv.x * 4.0 * (1.0 - uv.x);
-    float radius = uRadius * mix(0.8, 1.0, data.x);
+    //float radius = uRadius * mix(0.5, 1.0, data.x);
+    float radius = uRadius;
     pos = segmentPos + (normal * radius * phase);
+//    pos = segmentPos + (finalNormal * radius);
 
     vec4 mPos = modelMatrix * vec4(pos, 1.0);
     vec4 mvPos = viewMatrix * mPos;

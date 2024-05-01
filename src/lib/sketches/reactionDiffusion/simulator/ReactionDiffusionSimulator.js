@@ -46,7 +46,7 @@ export default class ReactionDiffusionSimulator {
                     uStep: {value: 1.0 / this.width},
                     uRateA: {value: 1.0},
                     uRateB: {value: 0.5},
-                    uFeed: {value: 0.055},
+                    uFeed: {value: 0.035},
                     uKill: {value: 0.062},
                     uIsA: {value: 1.0}
                 },
@@ -222,17 +222,15 @@ export default class ReactionDiffusionSimulator {
         this.bufferA.swap();
 
 
-        for(let i = 0; i < 1; i++) {
-            this.reactionDiffusionProgram.program.uniforms.tDiffuse.value = this.bufferA.read.texture;
-            // this.reactionDiffusionProgram.program.uniforms.tB.value = this.bufferB.read.texture;
-            //
-            this.gl.renderer.render({scene: this.reactionDiffusionProgram, target: this.bufferA.write});
-            this.bufferA.swap();
+
+        this.reactionDiffusionProgram.program.uniforms.tDiffuse.value = this.bufferA.read.texture;
+        this.gl.renderer.render({scene: this.reactionDiffusionProgram, target: this.bufferA.write});
+        this.bufferA.swap();
             // this.diffusionProgram.program.uniforms.tOld.value = this.bufferB.read.texture;
             // this.diffusionProgram.program.uniforms.tNew.value = this.bufferA.read.texture;
             // this.gl.renderer.render({scene: this.diffusionProgram, target: this.bufferA.write})
             // this.bufferA.swap();
-        }
+
         //
         // this.diffuseBProgram.program.uniforms.tA.value = this.bufferA.read.texture;
         // this.diffuseBProgram.program.uniforms.tB.value = this.bufferB.read.texture;

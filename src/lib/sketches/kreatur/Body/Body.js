@@ -141,9 +141,9 @@ export default class Body extends Transform {
         this.storePreviousTransforms();
         this.updateTarget(t);
         this.steer();
-        this.updateOrientation();
-        this.spin();
-        this.applyFakeGyroscopicForce();
+        // this.updateOrientation();
+        // this.spin();
+        // this.applyFakeGyroscopicForce();
 
         this.rigidBody.update();
         this.rootsTransformRigidBody.update();
@@ -206,6 +206,7 @@ export default class Body extends Transform {
     updateRootWorldPositions() {
 
         this.rootsTransform.position.copy(this.debugMesh.position);
+        this.rootsTransform.updateMatrixWorld();
         this.roots.forEach((root, i) => {
             root.updateMatrixWorld();
             const worldP = root.position.clone().applyMatrix4(this.rootsTransform.worldMatrix);

@@ -33,5 +33,4 @@ void main() {
     float outLine = step(0.0, 1.0-length(data.xyz)) * data.w;
 
     gl_FragColor = vec4(vec3(vUv, outLine) * outLine, 1.0);
-//    gl_FragColor = vec4(vec3(vUv, hash.z) * hash.z, 1.0);
 }

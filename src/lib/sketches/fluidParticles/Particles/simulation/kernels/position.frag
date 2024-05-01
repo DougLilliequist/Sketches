@@ -39,6 +39,7 @@ void main() {
     vec3 vel = texture2D(_Velocity, vUv).xyz;
 
     pos.xyz += vel;
+    pos.z = 0.0;
 
     float lifeRate = param;
 
@@ -59,7 +60,7 @@ void main() {
 
     life -= mix(LIFEMIN, LIFEMAX, lifeRate);
 
-    gl_FragColor = vec4(pos.xyz, life);
+    gl_FragColor = vec4(pos.xyz, 0.5);
 
 }
 

@@ -22,6 +22,7 @@ void main() {
     float c = uStep * 100.0;
     float laplace = ((z1 + z2 + z3 + z4) - 4.0*z) * 0.25;
     float wave = (c * laplace) + (2.0*z - zPrev);
-    gl_FragColor = vec4(vec3(wave) * 0.998, 1.0);
+    //gl_FragColor = vec4(vec3(wave) * 0.998, 1.0);
+    gl_FragColor = vec4(vec3(wave) * 0.988, 1.0);
 
 }

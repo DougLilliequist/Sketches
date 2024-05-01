@@ -16,4 +16,6 @@
     <li><a href="/temporalaademo">temporal anti-aliasing demo</a><li>
     <li><a href="/dissolve">dissolve</a><li>
     <li><a href="/kreatur">kreatur</a><li>
+    <li><a href="/ragdoll">ragdoll</a><li>
+    <li><a href="/gameoflife">game of life</a><li>
 </ul>

@@ -13,6 +13,9 @@ in vec2 vUv;
 
 out vec4 data;
 
+#define DAMPING 0.93
+#define INERTIA 0.97
+
 void main() {
 
     vec3 pos = texture(tPosition, vUv).xyz;
@@ -24,11 +27,11 @@ void main() {
 //        vel = vel + (-D / uDeltaTime);
 
         //.93 is the best setting iirc from paper?
-        vel += (-D / uDeltaTime) * 0.93;
+        vel += (-D / uDeltaTime) * DAMPING;
     }
 
-    //.97 looks best so far
-    vel *= 0.97;
+    //.97 as inertia with the current damping factor looks best so far
+    vel *= INERTIA;
 //    vel *= 0.9;
 
     data = vec4(vel, 1.0);

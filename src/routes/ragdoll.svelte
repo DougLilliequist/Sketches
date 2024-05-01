@@ -1,8 +1,7 @@
 <script>
 
     import { onMount, tick } from 'svelte';
-    import {jumpflooding} from '$lib/sketches/jumpflooding/jumpflooding.js';
-    import {Pane} from "tweakpane";
+    import {RagDoll} from '$lib/sketches/ragdoll/RagDoll.js';
 
     //--------------------------------
 
@@ -17,28 +16,13 @@
     let deltaTime = 0;
     let prevTime = 0;
 
-    const PARAMS = {
-        nSteps: 1,
-        uA: 1,
-        uB: 1,
-        uM: 1,
-        uN: 1
-    }
-
     //--------------------------------
 
     onMount(async()=> {
 
         await tick();
 
-        window.pane = new Pane();
-        pane.addInput(PARAMS, 'nSteps', {step: 1});
-        pane.addInput(PARAMS, 'uA', {min: -20, max: 20, step: 0.1});
-        pane.addInput(PARAMS, 'uB', {min: -20, max: 20, step: 0.1});
-        pane.addInput(PARAMS, 'uM', {min: -20, max: 20, step: 0.1});
-        pane.addInput(PARAMS, 'uN', {min: -20, max: 20, step: 0.1});
-
-        sketch = new jumpflooding({el: canvas});
+        sketch = new RagDoll({el: canvas});
 
         handleTick();
 

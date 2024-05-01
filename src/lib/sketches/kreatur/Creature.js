@@ -15,6 +15,7 @@ export default class Creature extends Transform {
             rootPositions: this.body.rootPositions,
             // resolutionCount: new Vec2(125, this.body.rootPositions.length),
             resolutionCount: new Vec2(256, this.body.rootPositions.length),
+            // resolutionCount: new Vec2(64, this.body.rootPositions.length),
             tentacleResolution: 8
         })
 
