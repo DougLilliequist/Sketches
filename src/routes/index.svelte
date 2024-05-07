@@ -18,4 +18,5 @@
     <li><a href="/kreatur">kreatur</a><li>
     <li><a href="/ragdoll">ragdoll</a><li>
     <li><a href="/gameoflife">game of life</a><li>
+    <li><a href="/ssaopost">ssao</a><li>
 </ul>

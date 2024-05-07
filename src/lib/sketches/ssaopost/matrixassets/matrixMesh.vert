@@ -161,7 +161,9 @@ void main() {
     vec4 hash = hash43(rootPosition + uHash * 2.0 - 1.0);
 
     vec3 offsetPos = rootPosition + vec3(0.0, -1.8, 0.0);
-
+    vec3 norm = normalize(offsetPos + normal);
+    vLocalNormal = norm;
+    vNormal = normalMatrix * norm;
 
     float yPhase = clamp(dot(offsetPos, vec3(0.0, 1.8, 0.0))*0.5+0.5, 0.0, 1.0);
     vec3 offsetDirection = normalize(offsetPos);
@@ -182,10 +184,6 @@ void main() {
 
     vec3 finalPos = offsetPos + localPos * localScale;
     finalPos *= 0.5;
-
-    vec3 norm = normalize(offsetPos + normal);
-    vLocalNormal = norm;
-    vNormal = normalMatrix * norm;
 
     vPos = finalPos;
 

@@ -18,7 +18,7 @@
   "type": "module",
   "dependencies": {
     "gsap": "^3.11.3",
-    "ogl": "^0.0.116",
+    "ogl": "^1.0.6",
     "spotify-web-api-js": "^1.5.1",
     "stats-js": "^1.0.1",
     "tweakpane": "^3.1.1"
