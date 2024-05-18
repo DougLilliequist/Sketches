@@ -1,7 +1,7 @@
 #version 300 es
 precision highp float;
 
-attribute vec3 position;
+in vec3 position;
 
 uniform sampler2D tRelativePositions;
 uniform sampler2D tInitRelativePositions;

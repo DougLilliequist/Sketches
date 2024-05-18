@@ -1,7 +1,7 @@
 #version 300 es
 precision highp float;
 
-attribute vec3 position;
+in vec3 position;
 
 uniform sampler2D tPosition;
 uniform sampler2D tInitRelativePositions;
@@ -60,13 +60,12 @@ void main() {
 
     mat3 R = quatToMat(texelFetch(tQuaternion, ivec2(0, 0), 0));
 
-    vec3 AA = texelFetch(tAPQAQQInvA, vec2(0, 0), 0).xyz;
-    vec3 AB = texelFetch(tAPQAQQInvB, vec2(0, 0), 0).xyz;
-    vec3 AC = texelFetch(tAPQAQQInvC, vec2(0, 0), 0).xyz;
+    vec3 AA = texelFetch(tAPQAQQInvA, ivec2(0, 0), 0).xyz;
+    vec3 AB = texelFetch(tAPQAQQInvB, ivec2(0, 0), 0).xyz;
+    vec3 AC = texelFetch(tAPQAQQInvC, ivec2(0, 0), 0).xyz;
 
     mat3 A = mat3(AA, AB, AC);
-
-    R = uBeta * A + (1.0 - uBeta) * R;
+    R = (uBeta * A) + ((1.0 - uBeta) * R);
 
     vec3 centerOfMass = texelFetch(tCenterOfMass, ivec2(0, 0), 0).xyz;
     vec3 initRelativePos = texelFetch(tInitRelativePositions, iCoord, 0).xyz;
