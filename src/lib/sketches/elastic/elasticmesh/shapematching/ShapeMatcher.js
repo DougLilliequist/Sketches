@@ -76,9 +76,10 @@ export class ShapeMatcher {
         posBufferOptions.color = 2;
 
         //attachments:
-        // - 0: current position
+        // - 0: predicted position
         // - 1: previous position
         this.positionBuffer = new RenderTarget(this.gl, posBufferOptions);
+        this.solvedPositionsBuffer = new RenderTarget(this.gl, options);
 
         this.normalBuffer = new RenderTarget(this.gl, options);
         this.velocityBuffer = new RenderTarget(this.gl, options);
@@ -132,7 +133,11 @@ export class ShapeMatcher {
 
         //buffer containing the matrix rows that contains
         //the resulting matrix that will be applied to the goal positions
-        this.finalMatrixBuffer = new RenderTarget(this.gl, singlePixelOptions);
+
+        const finalMatrixOptions = Object.assign({}, singlePixelOptions);
+        finalMatrixOptions.color = 4;
+
+        this.finalMatrixBuffer = new RenderTarget(this.gl, finalMatrixOptions);
 
         this.initCenterOfMassBuffer =  new RenderTarget(this.gl, singlePixelOptions);
         this.centerOfMassBuffer = new RenderTarget(this.gl, singlePixelOptions);
@@ -173,12 +178,6 @@ export class ShapeMatcher {
 
         //------------------------------------------------
 
-        this.blitMesh = new Mesh(this.gl, {
-            mode: this.gl.POINTS,
-            geometry,
-            program: this.predictPositionsProgram
-        });
-
         this.copyProgram = new Program(this.gl, {
             vertex: bigTriangle,
             fragment: copy,
@@ -189,8 +188,20 @@ export class ShapeMatcher {
             depthWrite: false
         });
 
+        this.blitMesh = new Mesh(this.gl, {
+            mode: this.gl.POINTS,
+            geometry,
+            program: this.predictPositionsProgram
+        });
+
         this.blitQuad = new Mesh(this.gl, {
             geometry: copyGeo,
+            program: this.copyProgram
+        })
+
+        this.blitPoint = new Mesh(this.gl, {
+            mode: this.gl.POINTS,
+            geometry: new Geometry(this.gl, {position: {size: 3, data: new Float32Array[0, 0, 0]}}),
             program: this.copyProgram
         })
 
@@ -215,7 +226,7 @@ export class ShapeMatcher {
 
         //here we will calculate the ideal rotation, which will be a quaternion
         this.calcRotationProgram = new Program(this.gl, {});
-        this.applyGoalPositions = new Program(this.gl, {});
+        this.applyGoalPositionsProgram = new Program(this.gl, {});
 
         //and we need to rotate the normals as well
         this.updateNormalsProgram = new Program(this.gl, {});
@@ -242,39 +253,65 @@ export class ShapeMatcher {
 
     predictionPositions() {
 
+        //use previously solved positions as input for
+        //predicting positions
+
+        this.blitMesh.program = this.predictPositionsProgram;
+
     }
 
     //render to single point of possible, use reductions otherwise
+    //REMINDER: CLEAR THE ALPHA BEFORE RENDERING TO SINGLE POINT
     calcCenterOfMass() {
+
+        if(!this.USE_REDUCTIONS) {
+            this.blitMesh.program = this.centerOfMassProgram;
+            return;
+        }
+
+        for(let i = this.reductions.length - 1; i >= 0; i--) {
+
+        }
 
     }
 
     calcRelativePositions() {
-
+        this.blitMesh.program = this.relativePositionsProgram;
     }
 
+    //REMINDER: CLEAR THE ALPHA BEFORE RENDERING TO SINGLE POINT
     generateAPQMatrix() {
+
+        if(!this.USE_REDUCTIONS) {
+            this.blitMesh = this.calcAPQMatrixProgram;
+            return;
+        }
+
+        for(let i = this.reductions.length - 1; i >= 0; i--) {
+
+        }
 
     }
 
     calcRotation() {
-
+        this.blitPoint.program = this.calcRotationProgram;
     }
 
     applyGoalPositions() {
-
+        this.blitMesh.program = this.applyGoalPositionsProgram;
     }
 
     solvePositions() {
-
+        this.blitMesh.program = this.solvePositionsProgram;
+        //copy predicted positions and render to solved positions buffer
     }
 
     updateVelocity() {
-
+        this.blitMesh.program = this.updateVelocityProgram;
     }
 
     updateNormals() {
-
+        this.blitMesh.program = this.updateNormalsProgram;
     }
 
     update({time = 0, deltaTime = 0} = {}) {

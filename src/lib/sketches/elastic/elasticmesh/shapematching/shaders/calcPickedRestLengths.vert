@@ -1,4 +1,8 @@
-#version 120
+#version 300 es
+
+
+//REMINDER: STORE THE VERTEX ID OF THE PICKED PARTICLE
+//AND USE THAT TO LOOK UP THE PARTICLE WHOS REST LENGTH WE WANT TO CALCULATE
 
 void main() {
     gl_Position = vec4(vec3(0.0), 1.0);

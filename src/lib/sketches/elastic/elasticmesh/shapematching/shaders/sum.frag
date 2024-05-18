@@ -1,9 +1,9 @@
 #version 300 es
 precision highp float;
 
-in vec3 vRelativePos;
+in vec4 vData;
 out vec4 FragColor;
 
 void main() {
-    FragColor = vec4(vRelativePos, 1.0);
+    FragColor = vData;
 }

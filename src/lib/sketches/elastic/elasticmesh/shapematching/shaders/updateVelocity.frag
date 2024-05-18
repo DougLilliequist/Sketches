@@ -1,5 +1,8 @@
-#version 120
+#version 300 es
+precision highp float;
+
+in vec3 vVelocity;
 
 void main() {
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(vVelocity, 1.0);
 }
