@@ -18,8 +18,8 @@ out vec3 vNormal;
 out vec3 vPos;
 
 vec2 calcCoordFromIndex(in float index, in float size) {
-    x = (mod(index, size) + 0.5) / size;
-    y = (floor(index / size) + 0.5) / size;
+    float x = (mod(index, size) + 0.5) / size;
+    float y = (floor(index / size) + 0.5) / size;
     return vec2(x, y);
 }
 
@@ -27,7 +27,7 @@ void main() {
 
     float index = float(gl_VertexID);
     vec2 coord = calcCoordFromIndex(index, uSize);
-    vec2 iCoord = ivec2(coord * uSize);
+    ivec2 iCoord = ivec2(coord * uSize);
 
     vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
 

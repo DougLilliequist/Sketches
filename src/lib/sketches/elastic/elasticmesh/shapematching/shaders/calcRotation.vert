@@ -1,4 +1,4 @@
-#version es 300
+#version 300 es
 precision highp float;
 
 in vec3 position;
@@ -116,7 +116,7 @@ vec4 multiplyQuaternions(in vec4 q1, in vec4 q2) {
 
 void main() {
 
-    gl_Position = vec4(vec2(0.5), 0.0, 1.0);
+    gl_Position = vec4(0.5, 0.5, 0.0, 1.0);
     gl_PointSize = 1.0;
 
     mat3 AqqMatrix = mat3(0.0);
@@ -153,8 +153,8 @@ void main() {
     vRotation = q;
 
     mat3 ApqAqqMatrix = ApqMatrix * aqqInv; //used for linear deformations..
-    vAcolA = ApqAqqMatrix[0];
-    vAcolB = ApqAqqMatrix[1];
-    vAcolC = ApqAqqMatrix[2];
+    vAqpAqqMatrixA = ApqAqqMatrix[0];
+    vAqpAqqMatrixB = ApqAqqMatrix[1];
+    vAqpAqqMatrixC = ApqAqqMatrix[2];
 
 }

@@ -1,4 +1,4 @@
-#version es 300
+#version 300 es
 precision highp float;
 
 in vec4 vRotation;
