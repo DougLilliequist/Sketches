@@ -10,20 +10,6 @@ export class ShapeMatcher {
 
         /**
          * TODO:
-         *
-         * - extract vertex positions and normals from geometry
-         * - create shader function that will map all the meshes vertices
-         * to 2D positions based on vertex ID
-         * - create programs for
-         *  - position prediction
-         *  - center of mass calculation (summation)
-         *  - relative position calculation
-         *  - matrix creation (AQQ and APQ)
-         *  - rotation matrix creation (refer to Müllers paper)
-         *  - Goal position application
-         *  - constraint application
-         *  - velocity update
-         *  - normal rotations
          * - once I'm able to see the head fall down to floor and have
          * shape matching applied...
          *  - Build GPU picker
