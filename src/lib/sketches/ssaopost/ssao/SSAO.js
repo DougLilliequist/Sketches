@@ -150,7 +150,8 @@ export default class SSAO {
             uniforms: {
                 tAoDepth: {value: nullTexture},
                 uDirection: {value: new Vec2(1, 0)},
-                uDepthSigma: {value: 5.8},
+                // uDepthSigma: {value: 5.8},
+                uDepthSigma: {value: 10},
                 uSigma: {value: 10.1},
                 uFrustum: {value: new Vec2(2, 2)},
                 uResolution: {value: new Vec2(2, 2)},

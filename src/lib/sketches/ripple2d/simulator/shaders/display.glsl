@@ -38,6 +38,7 @@ void main() {
 
 //    gl_FragColor = vec4(vec3(texture2D(tDiffusion, vUv).x), 1.0);
     gl_FragColor = vec4(vec3(r,g,b), 1.0);
+//    gl_FragColor = vec4(vec3(texture2D(tDiffusion, vUv).x), 1.0);
 //    gl_FragColor = vec4(vec3(diffuseGradientCurrent.x), 1.0);
 
 }

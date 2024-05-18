@@ -23,8 +23,10 @@ export default class RippleSimulator {
 
     initBuffers() {
         this.bufferA = this.createPingPongBuffer(true);
-        this.bufferB = this.createPingPongBuffer(true);
-        this.splatBuffer = this.createPingPongBuffer(true);
+        // this.bufferB = this.createPingPongBuffer(true);
+        this.bufferB = this.createBuffer(true);
+        // this.splatBuffer = this.createPingPongBuffer(true);
+        this.splatBuffer = this.createBuffer(true);
         this.reactionDiffusionBuffer = this.createPingPongBuffer(true);
     }
 
@@ -56,10 +58,7 @@ export default class RippleSimulator {
         });
 
         const dt = 1/60;
-        // const c = 20 //original
-        const c = 20 //original
-        // const c = 8 //original
-        // const c = 25 //original
+        const c = 100 //original
 
         const alpha = 1 / (c * c)
 
@@ -148,9 +147,9 @@ export default class RippleSimulator {
             read: this.createBuffer(linear),
             write: this.createBuffer(linear),
             swap: () => {
-                const tmp = fbo.write;
-                fbo.write = fbo.read;
-                fbo.read = tmp;
+                const tmp = fbo.read;
+                fbo.read = fbo.write;
+                fbo.write = tmp;
             }
         }
 
@@ -162,9 +161,10 @@ export default class RippleSimulator {
         const params = {
             width: this.width,
             height: this.height,
-            format: this.gl.RGBA,
-            type: this.gl.FLOAT,
-            internalFormat: this.gl.RGBA32F,
+            // format: this.gl.RGBA,
+            format: this.gl.RED,
+            type: this.gl.HALF_FLOAT,
+            internalFormat: this.gl.R16F,
             // wrapS: this.gl.REPEAT,
             // wrapT: this.gl.REPEAT,
             minFilter: linear ? this.gl.LINEAR : this.gl.NEAREST,
@@ -182,41 +182,24 @@ export default class RippleSimulator {
         let dY = (userInput.deltaY / dt) * 1;
         let inputMag = Math.sqrt(dX * dX + dY * dY);
 
-        this.splatProgram.program.uniforms.uInputPos.value.set(userInput.posX, userInput.posY);
-        this.splatProgram.program.uniforms.uInput.value.set(dX, dY, 1.0);
-        this.splatProgram.program.uniforms.uInputMag.value = inputMag;
+        this.copyProgram.program.uniforms.tMap.value = this.bufferA.write.texture;
+        this.gl.renderer.render({scene: this.copyProgram, target: this.bufferB});
 
+        this.splatProgram.program.uniforms.uInputPos.value.set(userInput.posX, userInput.posY);
+        this.splatProgram.program.uniforms.uInputMag.value = inputMag;
         this.splatProgram.program.uniforms.tA.value = this.bufferA.read.texture;
         this.splatProgram.program.uniforms.uInput.value.set(1.0, 1.0, 1.0);
         this.gl.renderer.render({scene: this.splatProgram, target: this.bufferA.write});
         this.bufferA.swap();
 
-
-        // for(let i = 0; i < 1; i++) {
-
-        const c = 8 //original
-        // const c = 25 //original
-
-            this.rippleProgram.program.uniforms.tCurrent.value = this.bufferA.read.texture;
-            this.rippleProgram.program.uniforms.tPrev.value = this.bufferB.read.texture;
-            this.rippleProgram.program.uniforms.uDt.value = dt;
-            this.gl.renderer.render({scene: this.rippleProgram, target: this.bufferA.write});
-
-            this.copyProgram.program.uniforms.tMap.value = this.bufferA.read.texture;
-            this.gl.renderer.render({scene: this.copyProgram, target: this.bufferB.write});
-            this.bufferB.swap();
-
-            this.bufferA.swap();
-        // }
-
-        // this.reactionDiffusionProgram.program.uniforms.tDiffuse.value = this.bufferA.read.texture;
-        // // this.reactionDiffusionProgram.program.uniforms.tB.value = this.bufferB.read.texture;
-        // //
-        // this.gl.renderer.render({scene: this.reactionDiffusionProgram, target: this.bufferA.write});
-        // this.bufferA.swap();
+        this.rippleProgram.program.uniforms.tCurrent.value = this.bufferA.read.texture;
+        this.rippleProgram.program.uniforms.tPrev.value = this.bufferB.texture;
+        this.rippleProgram.program.uniforms.uDt.value = dt;
+        this.gl.renderer.render({scene: this.rippleProgram, target: this.bufferA.write});
+        this.bufferA.swap();
 
         this.display.program.uniforms.tDiffusion.value = this.bufferA.read.texture;
-        this.display.program.uniforms.tDiffusionPrev.value = this.bufferB.read.texture;
+        this.display.program.uniforms.tDiffusionPrev.value = this.bufferB.texture;
 
     }
 

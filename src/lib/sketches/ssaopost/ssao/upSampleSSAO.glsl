@@ -52,7 +52,7 @@ void main() {
 
     //very small rate of change - assume all samples are on the same surface
     if(fwidth(dists[0]) < uSurfaceThreshold * 0.001) {
-        vec2 fCoord = fract(coord + 0.5); //tmp fix for now with half pixel fudge
+        vec2 fCoord = fract(coord + 0.0); //tmp fix for now with half pixel fudge
         float x1 = mix(aos[0], aos[1], fCoord.x);
         float x2 = mix(aos[2], aos[3], fCoord.x);
         outputSSAO = mix(x1, x2, fCoord.y);
