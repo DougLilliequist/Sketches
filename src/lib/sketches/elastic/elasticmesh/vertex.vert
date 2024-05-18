@@ -11,6 +11,7 @@ uniform mat3 normalMatrix;
 
 uniform sampler2D tPositions;
 uniform sampler2D tNormals;
+uniform float uSize;
 
 out vec2 vUv;
 out vec3 vNormal;
