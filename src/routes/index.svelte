@@ -19,4 +19,5 @@
     <li><a href="/ragdoll">ragdoll</a><li>
     <li><a href="/gameoflife">game of life</a><li>
     <li><a href="/ssaopost">ssao</a><li>
+    <li><a href="/elastic">elastic</a><li>
 </ul>
