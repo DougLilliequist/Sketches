@@ -25,8 +25,8 @@ void main() {
 
     vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
 
-    if(pos.y < -0.5) {
-        pos.y = -0.5;
+    if(pos.y < -2.5) {
+        pos.y = -2.5;
     }
 
     vPos = pos;

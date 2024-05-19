@@ -23,7 +23,7 @@ void main() {
     vec2 coord = calcCoordFromIndex(index, uSize);
     ivec2 iCoord = ivec2(coord * uSize);
 
-    gl_Position = vec4(coord, 0.0, 1.0);
+    gl_Position = vec4(2.0 * coord - 1.0, 0.0, 1.0);
     gl_PointSize = 1.0;
 
     vec3 q = texelFetch(tInitRelativePositions, iCoord, 0).xyz;

@@ -15,6 +15,7 @@ uniform sampler2D tAPQAQQInvC;
 uniform float uSize;
 uniform float uAlpha;
 uniform float uBeta;
+uniform float uDt;
 
 out vec3 vPos;
 
@@ -65,14 +66,23 @@ void main() {
     vec3 AC = texelFetch(tAPQAQQInvC, ivec2(0, 0), 0).xyz;
 
     mat3 A = mat3(AA, AB, AC);
+    float det = determinant(A); //this is A LOT of MADS
+//    A /= pow(det, 1.0 / 3.0);
+
     R = (uBeta * A) + ((1.0 - uBeta) * R);
 
-    vec3 centerOfMass = texelFetch(tCenterOfMass, ivec2(0, 0), 0).xyz;
+    vec4 centerOfMass = texelFetch(tCenterOfMass, ivec2(0, 0), 0);
+    centerOfMass.xyz /= centerOfMass.w;
     vec3 initRelativePos = texelFetch(tInitRelativePositions, iCoord, 0).xyz;
-    vec3 goalPosition = (R * initRelativePos) + centerOfMass;
+    vec3 goalPosition = (R * initRelativePos) + centerOfMass.xyz;
 
     vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
+
+    float compliance = 0.00001 / (uDt * uDt);
+
+//    pos += ((goalPosition - pos) / (1.0 + compliance)) * uAlpha;
     pos += (goalPosition - pos) * uAlpha;
+//    pos += (goalPosition - pos) / (2.0 + compliance);
 
     vPos = pos;
 

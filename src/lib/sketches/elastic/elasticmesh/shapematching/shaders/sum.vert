@@ -18,12 +18,12 @@ void main() {
 
     float index = float(gl_VertexID);
     vec2 coord = calcCoordFromIndex(index, uSize);
-    ivec2 iCoord = ivec2(coord);
+    ivec2 iCoord = ivec2(coord * uSize);
 
     gl_Position = vec4(0.5, 0.5, 0.0, 1.0);
     gl_PointSize = 1.0;
 
-    vec3 data = texelFetch(tData, iCoord, 0).xyz;
-    vData = vec4(data, 1.0);
+    vec4 data = texelFetch(tData, iCoord, 0);
+    vData = data;
 
 }

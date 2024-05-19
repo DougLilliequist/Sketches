@@ -36,7 +36,7 @@ export class elastic {
 
         this.camera.position.x = 0.0;
         this.camera.position.y = 0.0;
-        this.camera.position.z = 5.0;
+        this.camera.position.z = 10.0;
 
         this.controls = new Orbit(this.camera, {
             target: new Vec3(0, 0.0, 0),
@@ -67,6 +67,8 @@ export class elastic {
     }) {
 
         this.controls.update();
+
+        this.elastic?.update?.({time, deltaTime});
 
         this.render({
             scene: this.scene,

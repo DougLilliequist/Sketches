@@ -34,10 +34,7 @@ void main() {
 
     vec3 vel = texelFetch(tVelocity, iCoord, 0).xyz;
 
-    vec3 acc = vec3(0.0);
-    acc += uGravity * uDt;
-
-    vel += acc;
+    vel -= uGravity * uDt;
 
     pos += vel * uDt;
 

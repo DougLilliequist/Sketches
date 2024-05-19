@@ -55,4 +55,10 @@ export class ElasticMesh extends Transform {
         this.mesh.setParent(this);
 
     }
+
+    update({time = 0, deltaTime = 0} = {}) {
+        this?.shapeMatcher?.update?.({time, deltaTime});
+        if(this.mesh) this.mesh.program.uniforms['tPositions'].value = this?.shapeMatcher?.positions;
+    }
+
 }

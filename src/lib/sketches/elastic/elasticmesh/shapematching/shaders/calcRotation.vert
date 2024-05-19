@@ -15,9 +15,9 @@ uniform sampler2D tPrevRotation;
 uniform float uInitMatrix;
 
 out vec4 vRotation;
-out vec3 vAqpAqqMatrixA;
-out vec3 vAqpAqqMatrixB;
-out vec3 vAqpAqqMatrixC;
+out vec3 vApqAqqMatrixA;
+out vec3 vApqAqqMatrixB;
+out vec3 vApqAqqMatrixC;
 
 mat3 quatToMat3(in vec4 q) {
     float x2 = q.x + q.x;
@@ -137,7 +137,7 @@ void main() {
     mat3 A = ApqMatrix; //for convinicence and following along the papers method
     vec4 q = mix(texelFetch(tPrevRotation, ivec2(0.0), 0), normalize(mat3ToQuat(aqqInv)), uInitMatrix);
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 60; i++) {
         mat3 R = quatToMat3(q);
         vec3 numerator = cross(A[0], R[0]) + cross(A[1], R[1]) + cross(A[2], R[2]);
         float denom = (1.0 / abs(dot(A[0], R[0]) + dot(A[1], R[1]) + dot(A[2], R[2])) + EPS);
@@ -153,8 +153,8 @@ void main() {
     vRotation = q;
 
     mat3 ApqAqqMatrix = ApqMatrix * aqqInv; //used for linear deformations..
-    vAqpAqqMatrixA = ApqAqqMatrix[0];
-    vAqpAqqMatrixB = ApqAqqMatrix[1];
-    vAqpAqqMatrixC = ApqAqqMatrix[2];
+    vApqAqqMatrixA = ApqAqqMatrix[0];
+    vApqAqqMatrixB = ApqAqqMatrix[1];
+    vApqAqqMatrixC = ApqAqqMatrix[2];
 
 }
