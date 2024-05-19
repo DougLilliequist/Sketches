@@ -259,7 +259,7 @@ export class ShapeMatcher {
                 tPrevPosition: {value: this.positionBuffer.textures[0]},
                 uSize: {value: this.SIZE},
                 uDt: {value: 1/120},
-                uInertia: {value: 0.993}
+                uInertia: {value: 0.998}
             },
             depthTest: false,
             depthWrite: false
@@ -587,8 +587,8 @@ export class ShapeMatcher {
 
     update({time = 0, deltaTime = 0} = {}) {
 
-        this.dt = 0.01;
-        // this.dt = deltaTime;
+        // this.dt = 0.01;
+        this.dt = deltaTime;
 
         if(this.firstTick) {
             this.firstTick = false;
