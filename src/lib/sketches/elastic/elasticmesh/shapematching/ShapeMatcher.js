@@ -576,7 +576,7 @@ export class ShapeMatcher {
 
     updateNormals() {
         this.blitMesh.program = this.updateNormalsProgram;
-        this.blitMesh.program.uniforms['tInitNormals'].value = this.initNormals.texture;
+        this.blitMesh.program.uniforms['tInitNormals'].value = this.initNormals;
         this.blitMesh.program.uniforms['tQuaternion'].value = this.finalRotationAndMatrixBuffer.textures[0];
         this.blitMesh.program.uniforms['tAPQAQQInvA'].value = this.finalRotationAndMatrixBuffer.textures[1];
         this.blitMesh.program.uniforms['tAPQAQQInvB'].value = this.finalRotationAndMatrixBuffer.textures[2];
