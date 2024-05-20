@@ -650,7 +650,7 @@ export class ShapeMatcher {
         this.blitMesh.program = currentProgram;
 
         const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-        const dist = new Vec3().sub(point, this.rayCaster.origin).len()*0.95;
+        const dist = new Vec3().sub(point, this.rayCaster.origin).len();
         this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
 
         this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
@@ -745,7 +745,7 @@ export class ShapeMatcher {
         const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
         const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-        const dist = new Vec3().sub(point, this.rayCaster.origin).len() *0.95;
+        const dist = new Vec3().sub(point, this.rayCaster.origin).len();
         this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
 
         this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);

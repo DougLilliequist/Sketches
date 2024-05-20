@@ -153,6 +153,7 @@ export class GpuPicker {
             uniforms: {
                 tPosition: {value: new Texture(this.gl)},
                 tTriangles: {value: this.triangleList.texture},
+                tIndex: {value: new Texture(this.gl)},
                 uIndex: {value: -1},
                 uRayDirection: {value: new Vec3(0, 0, -1)},
                 uRayOrigin: {value: new Vec3(0, 0, 0)},
@@ -204,7 +205,6 @@ export class GpuPicker {
         this.gl.readPixels(this.inputPos.x, this.inputPos.y, 1, 1, this.gl.RED, this.gl.FLOAT, pixels);
         this.gl.renderer.bindFramebuffer();
 
-
         this.objMatrix.inverse(worldMatrix);
         this.objRayOrigin.copy(rayOrigin).applyMatrix4(this.objMatrix);
         this.objRayDirection.copy(rayDirection).applyMatrix4(this.objMatrix).normalize();
@@ -212,7 +212,10 @@ export class GpuPicker {
         // this.objRayOrigin.copy(rayOrigin)
         // this.objRayDirection.copy(rayDirection)
 
+        //TODO:
+        // - pass normalised mouse coordinates as uniform and sample texture inside pick program
         this.pickProgram.program.uniforms['tPosition'].value = positions;
+        this.pickProgram.program.uniforms['tIndex'].value = this.triangleData.texture;
         this.pickProgram.program.uniforms['uRayOrigin'].value.copy(this.objRayOrigin);
         this.pickProgram.program.uniforms['uRayDirection'].value.copy(this.objRayDirection);
         this.pickProgram.program.uniforms['uIndex'].value = pixels[0];
