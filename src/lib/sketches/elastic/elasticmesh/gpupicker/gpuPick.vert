@@ -49,13 +49,13 @@ void main() {
     float minDist = 9999.0;
     float desiredIndex = -1.0;
     vec3 desiredPos = vec3(999.0, 999.0, 999.0);
-
+    vec3 rayDir = normalize(uRayDirection);
     for(int i = 0; i < 3; i++) {
 
         vec3 dir = positions[i] - uRayOrigin;
-        float projection = dot(dir, uRayDirection);
-        vec3 projectionPos = uRayOrigin + (uRayDirection * projection);
-        float dist = length(projectionPos - positions[i]);
+        float projection = dot(dir, rayDir);
+        vec3 projectionPos = uRayOrigin + rayDir * projection;
+        float dist = length(positions[i] - projectionPos);
         if(dist < minDist) {
             minDist = dist;
             desiredIndex = indicies[i];

@@ -120,6 +120,7 @@ export class GpuPicker {
             height: this.gl.canvas.height * 1,
             format: this.gl.RED,
             internalFormat: this.gl.R32F,
+            generateMipmaps: false,
             type: this.gl.FLOAT,
             wrapS: this.gl.CLAMP_TO_EDGE,
             wrapT: this.gl.CLAMP_TO_EDGE,
@@ -173,8 +174,6 @@ export class GpuPicker {
             program: this.gpuPickProgram
         });
 
-        console.log(this.pickMesh);
-
         this.objMatrix = new Mat4();
         this.objRayOrigin = new Vec3();
         this.objRayDirection = new Vec3();
@@ -206,11 +205,11 @@ export class GpuPicker {
         this.gl.renderer.bindFramebuffer();
 
         this.objMatrix.inverse(worldMatrix);
-        this.objRayOrigin.copy(rayOrigin).applyMatrix4(this.objMatrix);
-        this.objRayDirection.copy(rayDirection).applyMatrix4(this.objMatrix).normalize();
+        // this.objRayOrigin.copy(rayOrigin).applyMatrix4(this.objMatrix);
+        // this.objRayDirection.copy(rayDirection).applyMatrix4(this.objMatrix).normalize();
 
-        // this.objRayOrigin.copy(rayOrigin)
-        // this.objRayDirection.copy(rayDirection)
+        this.objRayOrigin.copy(rayOrigin)
+        this.objRayDirection.copy(rayDirection)
 
         //TODO:
         // - pass normalised mouse coordinates as uniform and sample texture inside pick program
