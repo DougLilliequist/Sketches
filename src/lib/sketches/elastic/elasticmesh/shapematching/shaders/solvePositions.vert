@@ -44,10 +44,10 @@ void main() {
     }
 
 
-    if((uIsDragging > 0.5) && (uPickedIndex >= 0.0)) {
+    if((uIsDragging > 0.5) && (uPickedIndex > -1.0)) {
         float pickedRestLength = texelFetch(tPickedRestLengths, iCoord, 0).x;
-        ivec2 targetCoord = ivec2(calcCoordFromIndex(uPickedIndex, uSize) * uSize);
-        vec3 target = texelFetch(tPositions, targetCoord, 0).xyz;
+//        ivec2 targetCoord = ivec2(calcCoordFromIndex(uPickedIndex, uSize) * uSize);
+//        vec3 target = texelFetch(tPositions, targetCoord, 0).xyz;
 
         vec3 dir = uHitPoint - pos;
         float dist = length(dir);
@@ -56,7 +56,7 @@ void main() {
 
             float distPhase = smoothstep(0.0, 1.0, pickedRestLength / 2.0);
 
-            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength) / 1.0;
+            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength) / 10.0;
 //            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 2.0, pickedRestLength));
 //            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 3.0, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength);
         }

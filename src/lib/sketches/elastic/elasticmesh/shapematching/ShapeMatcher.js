@@ -64,6 +64,7 @@ export class ShapeMatcher {
         this.hitPoint = new Vec3(999, 999, 999);
         this.initHitPoint = new Vec3(999, 999 ,999);
         this.dragging = false;
+        this.hitBlitted = false;
 
         this.initBuffers();
         this.initShapeMatchingBuffers();
@@ -383,7 +384,7 @@ export class ShapeMatcher {
                 tAPQAQQInvB: {value: this.finalRotationAndMatrixBuffer.textures[2]},
                 tAPQAQQInvC: {value: this.finalRotationAndMatrixBuffer.textures[3]},
                 uSize: {value: this.SIZE},
-                uAlpha: {value: 0.005},
+                uAlpha: {value: 0.0035},
                 uBeta: {value: 0.5},
                 uDt: {value: 1/120}
             },
@@ -621,6 +622,42 @@ export class ShapeMatcher {
         this.gl.renderer.render({scene: this.blitMesh, target: this.normalBuffer});
     }
 
+    blitHit() {
+        if(this.hitBlitted) return;
+        this.hitBlitted = true;
+
+        const prevProgram = this.blitQuad.program;
+        this.blitQuad.program = this.copyProgram;
+        this.blitQuad.program.uniforms['tMap'].value = this.positionBuffer.textures[1];
+        // this.blitQuad.program.uniforms['tMap'].value = this.solvedPositionsBuffer.read.texture
+        this.gl.renderer.render({scene: this.blitQuad, target: this.copyBuffer});
+        this.blitQuad.program = prevProgram;
+
+        this.gpuPicker.pick({
+            mesh: this.blitMesh,
+            positions: this.copyBuffer.texture,
+            rayOrigin: this.rayCaster.origin,
+            rayDirection: this.rayCaster.direction,
+            size: this.SIZE,
+            worldMatrix: this.worldMatrix
+        });
+
+        const currentProgram = this.blitMesh.program;
+        this.blitMesh.program = this.pickedRestLengthsProgram;
+        this.blitMesh.program.uniforms['tPositions'].value = this.copyBuffer.texture;
+        this.blitMesh.program.uniforms['uPickedIndex'].value = this.gpuPicker.result.w;
+        this.gl.renderer.render({scene: this.blitMesh, target: this.pickedRestLengthsBuffer});
+        this.blitMesh.program = currentProgram;
+
+        const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
+        const dist = new Vec3().sub(point, this.rayCaster.origin).len()*0.95;
+        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+
+        this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
+        this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
+        this.solvePositionsProgram.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
+    }
+
     update({time = 0, deltaTime = 0, worldMatrix} = {}) {
 
         // this.dt = 0.01;
@@ -636,6 +673,10 @@ export class ShapeMatcher {
         for(let i = 0; i < this.SUBSTEPS; i++) {
 
             this.predictionPositions();
+
+            if(this.dragging) {
+                this.blitHit();
+            }
 
             //shape matching
             //-------------
@@ -678,7 +719,9 @@ export class ShapeMatcher {
     addHandlers() {
 
         this.hitPoint = new Vec3();
-        this.gpuPicker = new GpuPicker(this.gl);
+        this.gpuPicker = new GpuPicker(this.gl, {
+            geometry: this.refGeometry
+        });
         this.rayCaster = new Raycast();
         addEventListener('pointerdown', this.handlePointerDown)
         addEventListener('pointermove', this.handlePointerMove)
@@ -687,42 +730,11 @@ export class ShapeMatcher {
     }
 
     handlePointerDown = (e) => {
-
         this.dragging = true;
         const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
         const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
-
-        const prevProgram = this.blitQuad.program;
-        this.blitQuad.program = this.copyProgram;
-        this.blitQuad.program.uniforms['tMap'].value = this.positionBuffer.textures[1];
-        this.gl.renderer.render({scene: this.blitQuad, target: this.copyBuffer});
-        this.blitQuad.program = prevProgram;
-
-        this.gpuPicker.pick({
-            mesh: this.blitMesh,
-            positions: this.copyBuffer.texture,
-            rayOrigin: this.rayCaster.origin,
-            rayDirection: this.rayCaster.direction,
-            size: this.SIZE,
-            worldMatrix: this.worldMatrix
-        });
-
-        const currentProgram = this.blitMesh.program;
-        this.blitMesh.program = this.pickedRestLengthsProgram;
-        this.blitMesh.program.uniforms['tPositions'].value = this.copyBuffer.texture;
-        this.blitMesh.program.uniforms['uPickedIndex'].value = this.gpuPicker.result.w;
-        this.gl.renderer.render({scene: this.blitMesh, target: this.pickedRestLengthsBuffer});
-        this.blitMesh.program = currentProgram;
-
-        const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-        const dist = new Vec3().sub(point, this.rayCaster.origin).len()*0.95;
-        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
-
-        this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
-        this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
-        this.solvePositionsProgram.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
-
+        // this.blitHit();
     }
 
     handlePointerMove = (e) => {
@@ -743,6 +755,7 @@ export class ShapeMatcher {
 
     handlePointerUp = (e) => {
         this.dragging = false;
+        this.hitBlitted = false;
         this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
         // this.hitPoint.set(999.0, 999.0, 999.0);
     }
