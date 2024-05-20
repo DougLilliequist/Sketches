@@ -1,9 +1,39 @@
 #version 300 es
+precision highp float;
 
+in vec3 position;
 
-//REMINDER: STORE THE VERTEX ID OF THE PICKED PARTICLE
-//AND USE THAT TO LOOK UP THE PARTICLE WHOS REST LENGTH WE WANT TO CALCULATE
+uniform sampler2D tPositions;
+
+uniform float uPickedIndex;
+uniform float uSize;
+
+out float vRestLength;
+
+vec2 calcCoordFromIndex(in float index, in float size) {
+    float x = (mod(index, size) + 0.5) / size;
+    float y = (floor(index / size) + 0.5) / size;
+    return vec2(x, y);
+}
 
 void main() {
-    gl_Position = vec4(vec3(0.0), 1.0);
+
+    float index = float(gl_VertexID);
+    vec2 coord = calcCoordFromIndex(index, uSize);
+    ivec2 iCoord = ivec2(coord * uSize);
+
+    gl_Position = vec4(2.0 * coord - 1.0, 0.0, 1.0);
+    gl_PointSize = 1.0;
+
+    if(uPickedIndex < 0.0) {
+        vRestLength = 10000.0;
+    } else {
+        vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
+
+        ivec2 pickedCoord = ivec2(calcCoordFromIndex(uPickedIndex, uSize) * uSize);
+
+        vec3 target = texelFetch(tPositions, pickedCoord, 0).xyz;
+        vRestLength = length(target - pos);
+    }
+
 }

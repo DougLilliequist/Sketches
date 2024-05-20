@@ -33,9 +33,9 @@ export class ElasticMesh extends Transform {
         const {children} = scene[0];
 
         this.gltfMesh = children[0];
-        // this.gltfMesh.setParent(this);
+        const {geometry} = this.gltfMesh;
 
-        this.shapeMatcher = new ShapeMatcher(this.gl, {geometry: this.gltfMesh.geometry});
+        this.shapeMatcher = new ShapeMatcher(this.gl, {geometry});
 
         const program = new Program(this.gl, {
             vertex,
@@ -57,7 +57,7 @@ export class ElasticMesh extends Transform {
     }
 
     update({time = 0, deltaTime = 0} = {}) {
-        this?.shapeMatcher?.update?.({time, deltaTime});
+        this?.shapeMatcher?.update?.({time, deltaTime, worldMatrix: this.worldMatrix});
         if(this.mesh) this.mesh.program.uniforms['tPositions'].value = this?.shapeMatcher?.positions;
         if(this.mesh) this.mesh.program.uniforms['tNormals'].value = this?.shapeMatcher?.normals;
     }

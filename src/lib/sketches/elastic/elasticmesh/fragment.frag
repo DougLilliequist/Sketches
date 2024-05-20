@@ -13,6 +13,7 @@ void main() {
     vec3 lightDir = normalize(lightPos - vPos);
 
     float light = dot(lightDir, vNormal) * 0.5 + 0.5;
+    light = light * light;
 
-    FragColor = vec4(vec3(light), 1.0);
+    FragColor = vec4(vNormal*0.5+0.5, 1.0);
 }

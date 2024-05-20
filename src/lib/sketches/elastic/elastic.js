@@ -1,5 +1,6 @@
-import {Renderer, Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
+import {Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
 import {ElasticMesh} from "$lib/sketches/elastic/elasticmesh/ElasticMesh.js";
+import {Renderer} from '../../../ogl/src/core/Renderer.js';
 
 export class elastic {
     constructor({el}) {
@@ -34,13 +35,15 @@ export class elastic {
             aspect: clientWidth / clientHeight
         });
 
+        this.gl.camera = this.camera;
+
         this.camera.position.x = 0.0;
         this.camera.position.y = 0.0;
-        this.camera.position.z = 10.0;
+        this.camera.position.z = 7.0;
 
-        this.controls = new Orbit(this.camera, {
-            target: new Vec3(0, 0.0, 0),
-        });
+        // this.controls = new Orbit(this.camera, {
+        //     target: new Vec3(0, 0.0, 0),
+        // });
         this.scene = new Transform();
 
         this.elastic = new ElasticMesh(this.gl);
@@ -66,7 +69,7 @@ export class elastic {
         deltaTime
     }) {
 
-        this.controls.update();
+        // this.controls.update();
 
         this.elastic?.update?.({time, deltaTime});
 

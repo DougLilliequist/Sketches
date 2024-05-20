@@ -1,11 +1,11 @@
-import {Geometry, Program, RenderTarget, Triangle, Mesh, Texture, Vec3} from "ogl";
+import {Geometry, Program, RenderTarget, Triangle, Mesh, Texture, Vec3, Mat4, Raycast, Vec2} from "ogl";
+import {GpuPicker} from "$lib/sketches/elastic/elasticmesh/gpupicker/GpuPicker.js";
 
 import bigTriangle from './shaders/bigTriangle.vert?raw';
 import copy from './shaders/copy.glsl?raw';
 
 import sumVert from './shaders/sum.vert?raw';
 import sumFrag from './shaders/sum.frag?raw';
-
 import blitDataVert from './shaders/blitData.vert?raw';
 import blitDataFrag from './shaders/blitData.frag?raw';
 
@@ -15,21 +15,20 @@ import solvePositionsVert from './shaders/solvePositions.vert?raw';
 import solvePositionsFrag from './shaders/solvePositions.frag?raw';
 import updateVelocityVert from './shaders/updateVelocity.vert?raw';
 import updateVelocityFrag from './shaders/updateVelocity.frag?raw';
-
 import calcRelativePositionsVert from './shaders/calcRelativePositions.vert?raw';
 import calcRelativePositionsFrag from './shaders/calcRelativePositions.frag?raw';
-
 import calcMatrixAVert from './shaders/calcMatrixA.vert?raw';
 import calcMatrixAFrag from './shaders/calcMatrixA.frag?raw';
-
 import calcRotationVert from './shaders/calcRotation.vert?raw';
 import calcRotationFrag from './shaders/calcRotation.frag?raw';
-
 import applyGoalPositionsVert from './shaders/applyGoalPositions.vert?raw';
 import applyGoalPositionsFrag from './shaders/applyGoalPositions.frag?raw';
-
 import updateNormalsVert from './shaders/updateNormals.vert?raw';
 import updateNormalsFrag from './shaders/updateNormals.frag?raw';
+import calcRestLengthsVert from './shaders/calcRestLengths.vert?raw';
+import calcRestLengthsFrag from './shaders/calcRestLengths.frag?raw';
+import calcPickedRestLengthsVert from './shaders/calcPickedRestLengths.vert?raw';
+import calcPickedRestLengthsFrag from './shaders/calcPickedRestLengths.frag?raw';
 
 export class ShapeMatcher {
     constructor(gl, {
@@ -60,7 +59,11 @@ export class ShapeMatcher {
         this.SUBSTEPS = 2;
         this.firstTick = true;
         this.firstMatrixCalc = true;
-        this.dt = 0;
+        this.dt = 1;
+        this.worldMatrix = new Mat4().identity();
+        this.hitPoint = new Vec3(999, 999, 999);
+        this.initHitPoint = new Vec3(999, 999 ,999);
+        this.dragging = false;
 
         this.initBuffers();
         this.initShapeMatchingBuffers();
@@ -123,10 +126,10 @@ export class ShapeMatcher {
 
         //buffer containing rest lengths between the picked particle
         //and all other particles
-        this.pickedRestLengths = new RenderTarget(this.gl, restLengthOptions);
+        this.pickedRestLengthsBuffer = new RenderTarget(this.gl, restLengthOptions);
 
         //initial rest lengths to make the mesh stick in place
-        this.restlenghts = new RenderTarget(this.gl, restLengthOptions);
+        this.restLenghtsBuffer = new RenderTarget(this.gl, restLengthOptions);
 
     }
 
@@ -181,7 +184,6 @@ export class ShapeMatcher {
         this.prevRotationBuffer = new RenderTarget(this.gl, singlePixelOptions);
         this.initCenterOfMassBuffer =  new RenderTarget(this.gl, singlePixelOptions);
         this.centerOfMassBuffer = new RenderTarget(this.gl, singlePixelOptions);
-
 
         //fuck off iOS...(can't use 32-bit float buffers and additively blend...)
         if(this.USE_REDUCTIONS) {
@@ -245,6 +247,12 @@ export class ShapeMatcher {
             fragment: solvePositionsFrag,
             uniforms: {
                 tPositions: {value: this.copyBuffer.texture},
+                tInitPositions: {value: this.copyBuffer.texture},
+                tPickedRestLengths: {value: new Texture(this.gl)},
+                tInitRestLengths: {value: new Texture(this.gl)},
+                uHitPoint: {value: this.hitPoint},
+                uIsDragging: {value: 0},
+                uPickedIndex: {value: -1},
                 uSize: {value: this.SIZE}
             },
             depthTest: false,
@@ -259,7 +267,8 @@ export class ShapeMatcher {
                 tPrevPosition: {value: this.positionBuffer.textures[0]},
                 uSize: {value: this.SIZE},
                 uDt: {value: 1/120},
-                uInertia: {value: 0.998}
+                // uInertia: {value: 0.998}
+                uInertia: {value: 0.997}
             },
             depthTest: false,
             depthWrite: false
@@ -374,7 +383,7 @@ export class ShapeMatcher {
                 tAPQAQQInvB: {value: this.finalRotationAndMatrixBuffer.textures[2]},
                 tAPQAQQInvC: {value: this.finalRotationAndMatrixBuffer.textures[3]},
                 uSize: {value: this.SIZE},
-                uAlpha: {value: 0.001},
+                uAlpha: {value: 0.005},
                 uBeta: {value: 0.5},
                 uDt: {value: 1/120}
             },
@@ -401,18 +410,31 @@ export class ShapeMatcher {
 
         //------------------------------------------------
 
-        // this.restLengthsProgram = new Program(this.gl, {});
-        // this.pickedRestLengthsProgram = new Program(this.gl, {});
+        this.restLengthsProgram = new Program(this.gl, {
+            vertex: calcRestLengthsVert,
+            fragment: calcRestLengthsFrag,
+            uniforms: {
+                tPositions: {value: new Texture(this.gl)},
+                tInitCenterOfMass: {value: new Texture(this.gl)},
+                uSize: {value: this.SIZE}
+            },
+            depthTest: false,
+            depthWrite: false
+        });
+
+        this.pickedRestLengthsProgram = new Program(this.gl, {
+            vertex: calcPickedRestLengthsVert,
+            fragment: calcPickedRestLengthsFrag,
+            uniforms: {
+                tPositions: {value: new Texture(this.gl)},
+                uPickedIndex: {value: -1.0},
+                uSize: {value: this.SIZE}
+            },
+            depthTest: false,
+            depthWrite: false
+        });
 
     }
-
-    //init GPU picking
-    addHandlers() {
-
-        this.hitPoint = new Vec3();
-
-    }
-
     //capture initial center of mass in order to determine the initial relative positions
     //which is required to calculate the AQQ matrix
     initShapeMatching() {
@@ -430,6 +452,13 @@ export class ShapeMatcher {
         this.initPositions = this.initPositionNormal.textures[0];
         this.initNormals = this.initPositionNormal.textures[1];
         this.sum({data: this.initPositions, target: this.initCenterOfMassBuffer});
+
+        const currentProgram = this.blitMesh.program;
+        this.blitMesh.program = this.restLengthsProgram;
+        this.blitMesh.program.uniforms['tPositions'].value = this.initPositions;
+        this.blitMesh.program.uniforms['tInitCenterOfMass'].value = this.initCenterOfMassBuffer.texture;
+        this.gl.renderer.render({scene: this.blitMesh, target: this.restLenghtsBuffer})
+        this.blitMesh.program = currentProgram;
 
         //calc init relative positions
         this.calcRelativePositions({
@@ -562,6 +591,13 @@ export class ShapeMatcher {
     solvePositions() {
         this.blitMesh.program = this.solvePositionsProgram;
         this.blitMesh.program.uniforms['tPositions'].value = this.solvedPositionsBuffer.read.texture;
+        this.blitMesh.program.uniforms['tInitPositions'].value = this.initPositions;
+        this.blitMesh.program.uniforms['tInitRestLengths'].value = this.restLenghtsBuffer.texture;
+        this.blitMesh.program.uniforms['tPickedRestLengths'].value = this.pickedRestLengthsBuffer.texture;
+        this.blitMesh.program.uniforms['tPositions'].value = this.solvedPositionsBuffer.read.texture;
+        // this.blitMesh.program.uniforms['uHitPoint'].value.copy(this.hitPoint);
+        // this.blitMesh.program.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
+        // this.blitMesh.program.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
         this.gl.renderer.render({scene: this.blitMesh, target: this.solvedPositionsBuffer.write});
         this.solvedPositionsBuffer.swap();
     }
@@ -585,17 +621,18 @@ export class ShapeMatcher {
         this.gl.renderer.render({scene: this.blitMesh, target: this.normalBuffer});
     }
 
-    update({time = 0, deltaTime = 0} = {}) {
+    update({time = 0, deltaTime = 0, worldMatrix} = {}) {
 
         // this.dt = 0.01;
         this.dt = deltaTime;
+        this.worldMatrix.copy(worldMatrix)
 
         if(this.firstTick) {
             this.firstTick = false;
             this.initShapeMatching();
             return;
         }
-
+        //TODO - test adding the gpu pick inside loop
         for(let i = 0; i < this.SUBSTEPS; i++) {
 
             this.predictionPositions();
@@ -635,7 +672,80 @@ export class ShapeMatcher {
     }
 
     get positions() { return this.solvedPositionsBuffer.read.texture;}
-
     get normals() { return this.normalBuffer.texture;}
+
+    //init GPU picking
+    addHandlers() {
+
+        this.hitPoint = new Vec3();
+        this.gpuPicker = new GpuPicker(this.gl);
+        this.rayCaster = new Raycast();
+        addEventListener('pointerdown', this.handlePointerDown)
+        addEventListener('pointermove', this.handlePointerMove)
+        addEventListener('pointerup', this.handlePointerUp)
+
+    }
+
+    handlePointerDown = (e) => {
+
+        this.dragging = true;
+        const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
+        const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
+        this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
+
+        const prevProgram = this.blitQuad.program;
+        this.blitQuad.program = this.copyProgram;
+        this.blitQuad.program.uniforms['tMap'].value = this.positionBuffer.textures[1];
+        this.gl.renderer.render({scene: this.blitQuad, target: this.copyBuffer});
+        this.blitQuad.program = prevProgram;
+
+        this.gpuPicker.pick({
+            mesh: this.blitMesh,
+            positions: this.copyBuffer.texture,
+            rayOrigin: this.rayCaster.origin,
+            rayDirection: this.rayCaster.direction,
+            size: this.SIZE,
+            worldMatrix: this.worldMatrix
+        });
+
+        const currentProgram = this.blitMesh.program;
+        this.blitMesh.program = this.pickedRestLengthsProgram;
+        this.blitMesh.program.uniforms['tPositions'].value = this.copyBuffer.texture;
+        this.blitMesh.program.uniforms['uPickedIndex'].value = this.gpuPicker.result.w;
+        this.gl.renderer.render({scene: this.blitMesh, target: this.pickedRestLengthsBuffer});
+        this.blitMesh.program = currentProgram;
+
+        const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
+        const dist = new Vec3().sub(point, this.rayCaster.origin).len()*0.95;
+        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+
+        this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
+        this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
+        this.solvePositionsProgram.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
+
+    }
+
+    handlePointerMove = (e) => {
+        if(!this.dragging) return;
+        if(this.gpuPicker.result.w < 0.0) return;
+
+        const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
+        const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
+        this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
+        const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
+        const dist = new Vec3().sub(point, this.rayCaster.origin).len() *0.95;
+        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+
+        this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
+        this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
+        this.solvePositionsProgram.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
+    }
+
+    handlePointerUp = (e) => {
+        this.dragging = false;
+        this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
+        // this.hitPoint.set(999.0, 999.0, 999.0);
+    }
+
 
 }

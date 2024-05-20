@@ -4,6 +4,13 @@ precision highp float;
 in vec3 position;
 
 uniform sampler2D tPositions;
+uniform sampler2D tInitPositions;
+uniform sampler2D tInitRestLengths;
+uniform sampler2D tPickedRestLengths;
+
+uniform vec3 uHitPoint;
+uniform float uIsDragging;
+uniform float uPickedIndex;
 uniform float uSize;
 
 out vec3 vPos;
@@ -24,9 +31,35 @@ void main() {
     gl_PointSize = 1.0;
 
     vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
+    vec3 initPos = texelFetch(tInitPositions, iCoord, 0).xyz;
+    float initRestLength = texelFetch(tInitRestLengths, iCoord, 0).x;
 
-    if(pos.y < -2.5) {
-        pos.y = -2.5;
+    vec3 initPosContraintDir = initPos - pos;
+    float constraintDist = length(initPosContraintDir);
+//    float r = 0.2 + initRestLength * 0.01;
+    float r = mix(0.2, 0.0, uIsDragging) + initRestLength * mix(0.01, 0.5, uIsDragging);
+    if(constraintDist > r) {
+        initPosContraintDir /= constraintDist;
+        pos += normalize(initPosContraintDir) * (constraintDist - r) * 0.01;
+    }
+
+
+    if((uIsDragging > 0.5) && (uPickedIndex >= 0.0)) {
+        float pickedRestLength = texelFetch(tPickedRestLengths, iCoord, 0).x;
+        ivec2 targetCoord = ivec2(calcCoordFromIndex(uPickedIndex, uSize) * uSize);
+        vec3 target = texelFetch(tPositions, targetCoord, 0).xyz;
+
+        vec3 dir = uHitPoint - pos;
+        float dist = length(dir);
+        if(dist > pickedRestLength) {
+            dir /= dist;
+
+            float distPhase = smoothstep(0.0, 1.0, pickedRestLength / 2.0);
+
+            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength) / 1.0;
+//            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 2.0, pickedRestLength));
+//            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 3.0, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength);
+        }
     }
 
     vPos = pos;
