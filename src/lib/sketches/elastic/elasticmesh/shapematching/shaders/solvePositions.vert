@@ -57,8 +57,8 @@ void main() {
 
             float distPhase = smoothstep(0.0, 1.0, pickedRestLength / 2.0);
 
-            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength) / 1.0;
-//            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 2.0, pickedRestLength));
+//            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength) / 1.0;
+            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 1.5, pickedRestLength));
 //            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 3.0, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength);
         }
     }

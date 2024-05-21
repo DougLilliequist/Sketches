@@ -9,6 +9,10 @@
   text-decoration: none;
 }
 
+html, body {
+  overflow: hidden;
+}
+
 body {
   min-height: 100vh;
   margin: 0;

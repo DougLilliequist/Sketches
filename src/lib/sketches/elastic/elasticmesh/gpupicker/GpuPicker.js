@@ -119,10 +119,21 @@ export class GpuPicker {
         this.hitData = new Vec4(999, 999, 999, -1);
 
         this.inputPos = new Vec2();
-        addEventListener('pointermove', e => {
-            this.inputPos.x = (e.x * this.gl.canvas.width) / this.gl.canvas.clientWidth,
+
+        addEventListener('pointerdown', e => {
+
+            this.inputPos.x = (e.x * this.gl.canvas.width) / this.gl.canvas.clientWidth
             this.inputPos.y = this.gl.canvas.height - (e.y * this.gl.canvas.height) / this.gl.canvas.clientHeight - 1
             this.pickProgram.program.uniforms['uInputPos'].value.copy(this.inputPos);
+
+        })
+
+        addEventListener('pointermove', e => {
+
+            this.inputPos.x = (e.x * this.gl.canvas.width) / this.gl.canvas.clientWidth
+            this.inputPos.y = this.gl.canvas.height - (e.y * this.gl.canvas.height) / this.gl.canvas.clientHeight - 1
+            this.pickProgram.program.uniforms['uInputPos'].value.copy(this.inputPos);
+
         })
 
     }
@@ -131,7 +142,7 @@ export class GpuPicker {
         this.positions = positions;
 
         const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
-        this.gl.clearColor(-1, 0, 0, -1);
+        this.gl.clearColor(0, 0, 0, -1);
         this.positionDisplayMesh.program.uniforms['tPosition'].value = positions;
         this.positionDisplayMesh.program.uniforms['uSize'].value = size;
         this.gl.renderer.render({scene: this.positionDisplayMesh, camera: this.gl.camera, target: this.positionData});
@@ -152,7 +163,6 @@ export class GpuPicker {
         let pixels = new Float32Array([0, 0, 0, 0]);
         this.gl.readPixels(0, 0, 1, 1, this.gl.RGBA, this.gl.FLOAT, pixels);
         this.gl.renderer.bindFramebuffer();
-
         this.hitData.fromArray(pixels);
     }
 

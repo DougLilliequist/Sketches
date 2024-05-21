@@ -16,6 +16,7 @@ uniform float uSize;
 out vec2 vUv;
 out vec3 vNormal;
 out vec3 vPos;
+out vec3 vViewPos;
 
 vec2 calcCoordFromIndex(in float index, in float size) {
     float x = (mod(index, size) + 0.5) / size;
@@ -34,12 +35,15 @@ void main() {
     vec4 worldPos = modelMatrix * vec4(pos, 1.0);
     vPos = worldPos.xyz;
 
+    vec4 viewPos = viewMatrix * worldPos;
+    vViewPos = viewPos.xyz;
+
     vec3 normal = texelFetch(tNormals, iCoord, 0).xyz;
     vNormal = normalMatrix * normal;
 
     vUv = uv;
 
-    vec4 clipPos = projectionMatrix * viewMatrix * worldPos;
+    vec4 clipPos = projectionMatrix * viewPos;
     gl_Position = clipPos;
 
 }

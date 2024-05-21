@@ -1,4 +1,4 @@
-import {Transform, GLTFLoader, Program, Mesh} from "ogl";
+import {Transform, GLTFLoader, Program, Mesh, Texture} from "ogl";
 import {ShapeMatcher} from "$lib/sketches/elastic/elasticmesh/shapematching/ShapeMatcher.js";
 
 import vertex from './vertex.vert?raw';
@@ -37,12 +37,20 @@ export class ElasticMesh extends Transform {
 
         this.shapeMatcher = new ShapeMatcher(this.gl, {geometry});
 
+        const img = new Image();
+        img.crossOrigin = "*";
+        img.src = 'src/lib/sketches/elastic/assets/doug.jpg';
+
+        const texture = new Texture(this.gl);
+        img.onload = () => texture.image = img;
+
         const program = new Program(this.gl, {
             vertex,
             fragment,
             uniforms: {
                 tPositions: {value: this.shapeMatcher.initPositionNormal.textures[0]},
                 tNormals: {value: this.shapeMatcher.initPositionNormal.textures[1]},
+                tMap: {value: texture},
                 uSize: {value: this.shapeMatcher.SIZE}
             },
             cullFace: null

@@ -399,7 +399,7 @@ export class ShapeMatcher {
                 tAPQAQQInvC: {value: this.finalRotationAndMatrixBuffer.textures[3]},
                 uSize: {value: this.SIZE},
                 uAlpha: {value: 0.0035},
-                // uAlpha: {value: 0.1},
+                // uAlpha: {value: 0.025}, //mobile
                 uBeta: {value: 0.5},
                 uDt: {value: 1/120}
             },
@@ -511,14 +511,13 @@ export class ShapeMatcher {
     //REMINDER: CLEAR THE ALPHA BEFORE RENDERING TO SINGLE POINT
     sum({data, target} = {}) {
 
-        if(!this.USE_REDUCTIONS) {
+        const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
+        this.gl.clearColor(0, 0, 0, 0);
 
-            const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
-            this.gl.clearColor(0, 0, 0, 0);
+        if(!this.USE_REDUCTIONS) {
 
             this.sumProgram.program.uniforms['tData'].value = data;
             this.gl.renderer.render({scene: this.sumProgram, target});
-
             this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 
             return;
@@ -543,6 +542,7 @@ export class ShapeMatcher {
 
         this.gl.renderer.autoClear = autoClear;
         this.blitQuad.program = prevBlitQuadProgram;
+        this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 
     }
 
@@ -614,9 +614,6 @@ export class ShapeMatcher {
         this.blitMesh.program.uniforms['tInitRestLengths'].value = this.restLenghtsBuffer.texture;
         this.blitMesh.program.uniforms['tPickedRestLengths'].value = this.pickedRestLengthsBuffer.texture;
         this.blitMesh.program.uniforms['tPositions'].value = this.solvedPositionsBuffer.read.texture;
-        // this.blitMesh.program.uniforms['uHitPoint'].value.copy(this.hitPoint);
-        // this.blitMesh.program.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
-        // this.blitMesh.program.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
         this.gl.renderer.render({scene: this.blitMesh, target: this.solvedPositionsBuffer.write});
         this.solvedPositionsBuffer.swap();
     }
@@ -740,6 +737,7 @@ export class ShapeMatcher {
         this.gpuPicker = new GpuPicker(this.gl, {
             geometry: this.refGeometry
         });
+
         this.rayCaster = new Raycast();
         addEventListener('pointerdown', this.handlePointerDown)
         addEventListener('pointermove', this.handlePointerMove)
@@ -759,7 +757,6 @@ export class ShapeMatcher {
         const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
         const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
-        this.blitHit();
         this.initHitPoint = this.hitPoint.clone();
     }
 
