@@ -120,6 +120,10 @@ export class GpuPicker {
 
         this.inputPos = new Vec2();
 
+        //TODO:
+        //- revisit the original idea of rendering the triangle indices and perform the ray lookup
+        //- fuck up probably was caused by not having the initial click position....
+
         addEventListener('pointerdown', e => {
 
             this.inputPos.x = (e.x * this.gl.canvas.width) / this.gl.canvas.clientWidth

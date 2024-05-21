@@ -24,7 +24,7 @@ void main() {
     float fresnel = pow(1.0 - max(0.0, dot(normalize(-vViewPos), vNormal)), 2.0);
     float totalLight = light * 0.5 + fresnel * 0.4 + ambientLight * 0.1;
 
-//    FragColor = vec4(vNormal*0.5+0.5, 1.0);
+    FragColor = vec4(vNormal*0.5+0.5, 1.0);
     FragColor = vec4(totalLight * col, 1.0);
 //    FragColor = vec4(vec3(fresnel), 1.0);
 }

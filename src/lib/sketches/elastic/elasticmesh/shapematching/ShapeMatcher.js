@@ -66,6 +66,7 @@ export class ShapeMatcher {
         this.hitPoint = new Vec3(999, 999, 999);
         this.localHitPoint = new Vec3(999, 999, 999);
         this.initHitPoint = new Vec3(999, 999 ,999);
+        this.initAngle = 0;
         this.dragging = false;
         this.hitBlitted = false;
 
@@ -257,6 +258,7 @@ export class ShapeMatcher {
                 uHitPoint: {value: this.hitPoint},
                 uIsDragging: {value: 0},
                 uPickedIndex: {value: -1},
+                uAngle: {value: new Vec2(0, 0)},
                 uSize: {value: this.SIZE}
             },
             depthTest: false,
@@ -417,6 +419,7 @@ export class ShapeMatcher {
                 tAPQAQQInvA: {value: this.finalRotationAndMatrixBuffer.textures[1]},
                 tAPQAQQInvB: {value: this.finalRotationAndMatrixBuffer.textures[2]},
                 tAPQAQQInvC: {value: this.finalRotationAndMatrixBuffer.textures[3]},
+                uAngle: {value: new Vec2(0, 0)},
                 uSize: {value: this.SIZE},
                 uBeta: {value: 0.5}
             },
@@ -657,6 +660,8 @@ export class ShapeMatcher {
         });
 
         this.updateHitPoint();
+        this.initHitPoint = this.hitPoint.clone();
+        this.updateHitOrientation();
 
         const currentProgram = this.blitMesh.program;
         this.blitMesh.program = this.pickedRestLengthsProgram;
@@ -747,8 +752,24 @@ export class ShapeMatcher {
 
     updateHitPoint(scale = 1) {
         this.localHitPoint = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len() * 0.9;
+        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len();
         this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+    }
+
+    updateHitOrientation() {
+
+
+        const initHitDir = this.initHitPoint.clone();
+        const currentHitDir = this.hitPoint.clone();
+
+        let angleX = currentHitDir.clone().multiply(new Vec3(1.0, 0.0, 1.0)).normalize().angle(initHitDir.clone().multiply(new Vec3(1.0, 0.0, 1.0)).normalize());
+        angleX *= Math.sign(currentHitDir.x - initHitDir.x);
+
+        let angleY = currentHitDir.clone().multiply(new Vec3(0.0, 1.0, 1.0)).normalize().angle(initHitDir.clone().multiply(new Vec3(0.0, 1.0, 1.0)).normalize());
+        angleY *= Math.sign(currentHitDir.y - initHitDir.y);
+
+        this.solvePositionsProgram.uniforms['uAngle'].value.set(angleX, angleY);
+        this.updateNormalsProgram.uniforms['uAngle'].value.set(angleX, angleY);
 
     }
 
@@ -757,7 +778,6 @@ export class ShapeMatcher {
         const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
         const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
-        this.initHitPoint = this.hitPoint.clone();
     }
 
     handlePointerMove = (e) => {
@@ -769,6 +789,7 @@ export class ShapeMatcher {
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
 
         this.updateHitPoint();
+        this.updateHitOrientation();
         this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
 
     }
@@ -777,6 +798,9 @@ export class ShapeMatcher {
         this.dragging = false;
         this.hitBlitted = false;
         this.solvePositionsProgram.uniforms['uIsDragging'].value = 0;
+        this.solvePositionsProgram.uniforms['uAngle'].value.set(0, 0);
+        this.updateNormalsProgram.uniforms['uAngle'].value.set(0, 0);
+
     }
 
 

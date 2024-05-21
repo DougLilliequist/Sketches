@@ -10,6 +10,7 @@ uniform sampler2D tAPQAQQInvA;
 uniform sampler2D tAPQAQQInvB;
 uniform sampler2D tAPQAQQInvC;
 
+uniform vec2 uAngle;
 uniform float uSize;
 uniform float uBeta;
 
@@ -46,6 +47,10 @@ mat3 quatToMat3(in vec4 q) {
     return result;
 }
 
+mat2 rotate2D(float angle) {
+    return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+}
+
 void main() {
     float index = float(gl_VertexID);
     vec2 coord = calcCoordFromIndex(index, uSize);
@@ -65,5 +70,7 @@ void main() {
 
     vec3 normal = texelFetch(tInitNormals, iCoord, 0).xyz;
     vNormal = R * normal;
+    vNormal.xz = rotate2D(uAngle.x) * vNormal.xz;
+    vNormal.yz = rotate2D(uAngle.y) * vNormal.yz;
 
 }
