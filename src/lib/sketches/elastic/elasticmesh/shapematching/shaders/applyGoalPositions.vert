@@ -66,7 +66,7 @@ void main() {
     vec3 AC = texelFetch(tAPQAQQInvC, ivec2(0, 0), 0).xyz;
 
     mat3 A = mat3(AA, AB, AC);
-    float det = determinant(A); //this is A LOT of MADS
+//    float det = determinant(A); //this is A LOT of MADS
 //    A /= pow(det, 1.0 / 3.0);
 
     R = (uBeta * A) + ((1.0 - uBeta) * R);

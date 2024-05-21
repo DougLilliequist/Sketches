@@ -44,7 +44,8 @@ export class ElasticMesh extends Transform {
                 tPositions: {value: this.shapeMatcher.initPositionNormal.textures[0]},
                 tNormals: {value: this.shapeMatcher.initPositionNormal.textures[1]},
                 uSize: {value: this.shapeMatcher.SIZE}
-            }
+            },
+            cullFace: null
         });
 
         this.mesh = new Mesh(this.gl, {

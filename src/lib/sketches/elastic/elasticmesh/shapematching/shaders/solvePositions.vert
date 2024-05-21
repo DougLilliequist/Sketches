@@ -38,7 +38,7 @@ void main() {
     float constraintDist = length(initPosContraintDir);
 //    float r = 0.2 + initRestLength * 0.01;
     float r = mix(0.2, 0.0, uIsDragging) + initRestLength * mix(0.01, 0.5, uIsDragging);
-    r = 0.001;
+//    r = 0.001;
     if(constraintDist > r) {
         initPosContraintDir /= constraintDist;
         pos += normalize(initPosContraintDir) * (constraintDist - r) * 0.01;
@@ -57,7 +57,7 @@ void main() {
 
             float distPhase = smoothstep(0.0, 1.0, pickedRestLength / 2.0);
 
-            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength) / 10.0;
+            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength) / 1.0;
 //            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 2.0, pickedRestLength));
 //            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 3.0, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength);
         }

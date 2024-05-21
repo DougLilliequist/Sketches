@@ -729,10 +729,11 @@ export class ShapeMatcher {
 
     }
 
-    updateHitPoint() {
+    updateHitPoint(scale = 1) {
         this.localHitPoint = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len();
+        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len() * 0.9;
         this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+
     }
 
     handlePointerDown = (e) => {
@@ -741,6 +742,7 @@ export class ShapeMatcher {
         const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
         this.blitHit();
+        this.initHitPoint = this.hitPoint.clone();
     }
 
     handlePointerMove = (e) => {
@@ -750,6 +752,7 @@ export class ShapeMatcher {
         const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
         const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
+
         this.updateHitPoint();
         this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
 
