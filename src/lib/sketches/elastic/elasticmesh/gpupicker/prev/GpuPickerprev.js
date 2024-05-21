@@ -3,8 +3,13 @@ import {Program, RenderTarget, Texture, Vec2, Vec3, Mat4, Vec4, Geometry, Mesh, 
 import vertex from './gpuPick.vert?raw';
 import fragment from './gpuPick.frag?raw';
 
-import positionDisplayVert from './positionDisplay.vert?raw';
-import positionDisplayFrag from './positionDisplay.frag?raw';
+import triangleIndexDisplayVert from './positionDisplay.vert?raw';
+import triangleIndexDisplayFrag from './positionDisplay.frag?raw';
+
+import triangleListVert from './triangleList.vert?raw';
+import triangleListFrag from './triangleList.frag?raw';
+
+import prevGpuPickVert from './gpuPickprev2.vert?raw'
 
 export class GpuPicker {
     constructor(gl, {geometry} = {}) {
@@ -20,6 +25,13 @@ export class GpuPicker {
 
         let triangleIndexIerator = 0;
         let triangleIndex = 0;
+
+
+        //TODO:
+        // - encode the indices in the position attribute so I can sample the position buffer
+        // - create attribute for triangle index (which will be rendered as color)
+        // - make a point geometry for each triangle and store the vertex indices in the XYZ components
+        // - use the vertexID to place the said triangle in a 2D grid
 
         for(let i = 0; i < index.data.length; i++) {
             indexData[indexDataIterator++] = index.data[i];
@@ -43,21 +55,71 @@ export class GpuPicker {
             }
         })
 
-        const positionDisplayProgram = new Program(this.gl, {
-            vertex: positionDisplayVert,
-            fragment: positionDisplayFrag,
+        const triangleDisplayProgram = new Program(this.gl, {
+            vertex: triangleIndexDisplayVert,
+            fragment: triangleIndexDisplayFrag,
             uniforms: {
                 tPosition: {value: new Texture(this.gl)},
                 uSize: {value: 128}
             }
         })
 
-        this.positionDisplayMesh = new Mesh(this.gl, {
+        this.triangleDisplayMesh = new Mesh(this.gl, {
             geometry: indexGeometry,
-            program: positionDisplayProgram
+            program: triangleDisplayProgram
         });
 
-        this.positionData = new RenderTarget(this.gl, {
+        const triangleData = [];
+        let triangleDataIterator = 0;
+
+        for(let i = 0; i < index.data.length / 3; i++) {
+            triangleData[triangleDataIterator++] = index.data[i * 3];
+            triangleData[triangleDataIterator++] = index.data[i * 3 + 1];
+            triangleData[triangleDataIterator++] = index.data[i * 3 + 2];
+        }
+
+        const triangleListGeometry = new Geometry(this.gl, {
+            position: {
+                size: 3,
+                data: new Float32Array(triangleData)
+            }
+        })
+
+        const triangleListBufferSize = Math.pow(2, Math.ceil(Math.log2(Math.ceil(Math.sqrt(triangleListGeometry.attributes.position.count)))));
+
+        this.triangleList = new RenderTarget(this.gl, {
+            width: triangleListBufferSize,
+            height: triangleListBufferSize,
+            format: this.gl.RGBA,
+            internalFormat: this.gl.RGBA32F,
+            type: this.gl.FLOAT,
+            generateMipMaps: false,
+            depth: false,
+            wrapS: this.gl.CLAMP_TO_EDGE,
+            wrapT: this.gl.CLAMP_TO_EDGE,
+            minFilter: this.gl.NEAREST,
+            magFilter: this.gl.NEAREST
+        });
+
+        const triangleListProgram = new Program(this.gl, {
+            vertex: triangleListVert,
+            fragment: triangleListFrag,
+            uniforms: {
+                uSize: {value: triangleListBufferSize}
+            },
+            depthTest: false,
+            depthWrite: false
+        })
+
+        const triangleListMesh = new Mesh(this.gl, {
+            mode: this.gl.POINTS,
+            geometry: triangleListGeometry,
+            program: triangleListProgram
+        });
+
+        this.gl.renderer.render({scene: triangleListMesh, target: this.triangleList});
+
+        this.triangleData = new RenderTarget(this.gl, {
             width: this.gl.canvas.width * 1,
             height: this.gl.canvas.height * 1,
             format: this.gl.RGBA,
@@ -96,6 +158,7 @@ export class GpuPicker {
             fragment,
             uniforms: {
                 tPosition: {value: new Texture(this.gl)},
+                tTriangles: {value: this.triangleList.texture},
                 tIndex: {value: new Texture(this.gl)},
                 uIndex: {value: -1},
                 uInputPos: {value: new Vec2(-1, -1)},
@@ -105,6 +168,22 @@ export class GpuPicker {
             }
         });
 
+        this.gpuPickProgramPrev = new Program(this.gl, {
+            vertex: prevGpuPickVert,
+            fragment,
+            uniforms: {
+                tPosition: {value: new Texture(this.gl)},
+                uRayDirection: {value: new Vec3(0, 0, -1)},
+                uRayOrigin: {value: new Vec3(0, 0, 0)},
+                uSize: {value: 2}
+            }
+        });
+
+        this.pickMesh = new Mesh(this.gl, {
+            mode: this.gl.POINTS,
+            geometry: triangleListGeometry,
+            program: this.gpuPickProgramPrev
+        });
 
         this.pickProgram = new Mesh(this.gl, {
             mode: this.gl.POINTS,
@@ -127,14 +206,14 @@ export class GpuPicker {
 
     }
 
-    pick({positions, rayOrigin, rayDirection, size, worldMatrix} = {}) {
+    pick({mesh, positions, rayOrigin, rayDirection, size, worldMatrix} = {}) {
         this.positions = positions;
-
+        //render mesh with triangle indices as color
         const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
         this.gl.clearColor(-1, 0, 0, -1);
-        this.positionDisplayMesh.program.uniforms['tPosition'].value = positions;
-        this.positionDisplayMesh.program.uniforms['uSize'].value = size;
-        this.gl.renderer.render({scene: this.positionDisplayMesh, camera: this.gl.camera, target: this.positionData});
+        this.triangleDisplayMesh.program.uniforms['tPosition'].value = positions;
+        this.triangleDisplayMesh.program.uniforms['uSize'].value = size;
+        this.gl.renderer.render({scene: this.triangleDisplayMesh, camera: this.gl.camera, target: this.triangleData});
         this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 
         this.objMatrix.inverse(worldMatrix);
@@ -142,7 +221,7 @@ export class GpuPicker {
         this.objRayDirection.copy(rayDirection).applyMatrix4(this.objMatrix).normalize();
 
         this.pickProgram.program.uniforms['tPosition'].value = positions;
-        this.pickProgram.program.uniforms['tIndex'].value = this.positionData.texture;
+        this.pickProgram.program.uniforms['tIndex'].value = this.triangleData.texture;
         this.pickProgram.program.uniforms['uRayOrigin'].value.copy(this.objRayOrigin);
         this.pickProgram.program.uniforms['uRayDirection'].value.copy(this.objRayDirection);
         this.pickProgram.program.uniforms['uSize'].value = size;

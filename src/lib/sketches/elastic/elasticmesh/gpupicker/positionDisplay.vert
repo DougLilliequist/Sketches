@@ -11,7 +11,8 @@ uniform mat4 modelViewMatrix;
 
 uniform float uSize;
 
-out float vData;
+//out float vData;
+out vec3 vData;
 
 #define EPS 1.0e-9
 
@@ -24,7 +25,7 @@ vec2 calcCoordFromIndex(in float index, in float size) {
 void main() {
 
     vec3 pos = texelFetch(tPosition, ivec2(calcCoordFromIndex(position, uSize) * uSize), 0).xyz;
-    vData = triangleIndex;
+    vData = pos;
 
     vec4 clipPos = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 

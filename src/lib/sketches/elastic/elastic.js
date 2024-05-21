@@ -15,7 +15,7 @@ export class elastic {
             canvas: el,
             width: el.clientWidth,
             height: el.clientHeight,
-            antialias: true,
+            antialias: false,
             dpr: 1
         });
 

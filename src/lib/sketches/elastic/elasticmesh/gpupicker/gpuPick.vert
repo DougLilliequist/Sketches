@@ -6,10 +6,12 @@ in vec2 uv;
 
 uniform sampler2D tPosition;
 uniform sampler2D tTriangles;
+uniform sampler2D tIndex;
 
 uniform float uIndex;
 uniform vec3 uRayDirection;
 uniform vec3 uRayOrigin;
+uniform vec2 uInputPos;
 uniform float uSize;
 
 out vec4 vData;
@@ -24,46 +26,14 @@ vec2 calcCoordFromIndex(in float index, in float size) {
 
 void main() {
 
-    ivec2 triangleCoord = ivec2(calcCoordFromIndex(uIndex, 256.0) * 256.0);
+    vec4 pickedIndex = texelFetch(tIndex, ivec2(uInputPos), 0);
     gl_Position = vec4(0.5, 0.5, 0.0, 1.0);
     gl_PointSize = 1.0;
 
-    if(uIndex < 0.0) {
+    if(pickedIndex.w < 0.0) {
         vData = vec4(999.0, 999.0, 999.0, -1.0);
         return;
     }
 
-    vec3 indicies = texelFetch(tTriangles, triangleCoord, 0).xyz;
-
-    ivec2 coordA = ivec2(calcCoordFromIndex(indicies.x, uSize) * uSize);
-    ivec2 coordB = ivec2(calcCoordFromIndex(indicies.y, uSize) * uSize);
-    ivec2 coordC = ivec2(calcCoordFromIndex(indicies.z, uSize) * uSize);
-
-    vec3 posA = texelFetch(tPosition, coordA, 0).xyz;
-    vec3 posB = texelFetch(tPosition, coordB, 0).xyz;
-    vec3 posC = texelFetch(tPosition, coordC, 0).xyz;
-
-    vec3 positions[3] = vec3[3](posA, posB, posC);
-    float indices[3] = float[3](indicies.x, indicies.y, indicies.z);
-
-    float minDist = 9999.0;
-    float desiredIndex = -1.0;
-    vec3 desiredPos = vec3(999.0, 999.0, 999.0);
-    vec3 rayDir = normalize(uRayDirection);
-    for(int i = 0; i < 3; i++) {
-
-        vec3 dir = positions[i] - uRayOrigin;
-        float projection = dot(dir, rayDir);
-        vec3 projectionPos = uRayOrigin + rayDir * projection;
-        float dist = length(positions[i] - projectionPos);
-        if(dist < minDist) {
-            minDist = dist;
-            desiredIndex = indicies[i];
-            desiredPos = positions[i];
-        }
-
-    }
-
-    vData = vec4(desiredPos, desiredIndex);
-
+    vData = vec4(pickedIndex.xyz, 1.0);
 }

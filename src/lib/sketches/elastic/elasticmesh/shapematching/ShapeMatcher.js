@@ -62,6 +62,7 @@ export class ShapeMatcher {
         this.dt = 1;
         this.worldMatrix = new Mat4().identity();
         this.hitPoint = new Vec3(999, 999, 999);
+        this.localHitPoint = new Vec3(999, 999, 999);
         this.initHitPoint = new Vec3(999, 999 ,999);
         this.dragging = false;
         this.hitBlitted = false;
@@ -385,6 +386,7 @@ export class ShapeMatcher {
                 tAPQAQQInvC: {value: this.finalRotationAndMatrixBuffer.textures[3]},
                 uSize: {value: this.SIZE},
                 uAlpha: {value: 0.0035},
+                // uAlpha: {value: 0.1},
                 uBeta: {value: 0.5},
                 uDt: {value: 1/120}
             },
@@ -635,7 +637,6 @@ export class ShapeMatcher {
         this.blitQuad.program = prevProgram;
 
         this.gpuPicker.pick({
-            mesh: this.blitMesh,
             positions: this.copyBuffer.texture,
             rayOrigin: this.rayCaster.origin,
             rayDirection: this.rayCaster.direction,
@@ -643,15 +644,12 @@ export class ShapeMatcher {
             worldMatrix: this.worldMatrix
         });
 
-        const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-
-        const dist = new Vec3().sub(point, this.rayCaster.origin).len() * 0.9;
-        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+        this.updateHitPoint();
 
         const currentProgram = this.blitMesh.program;
         this.blitMesh.program = this.pickedRestLengthsProgram;
 
-        this.blitMesh.program.uniforms['uHitPoint'].value.copy(point);
+        this.blitMesh.program.uniforms['uHitPoint'].value.copy(this.localHitPoint);
         this.blitMesh.program.uniforms['tPositions'].value = this.copyBuffer.texture;
         this.blitMesh.program.uniforms['uPickedIndex'].value = this.gpuPicker.result.w;
         this.gl.renderer.render({scene: this.blitMesh, target: this.pickedRestLengthsBuffer});
@@ -659,6 +657,7 @@ export class ShapeMatcher {
 
         this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
         this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
+        console.log(this.gpuPicker.result.w);
         this.solvePositionsProgram.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
     }
 
@@ -677,10 +676,7 @@ export class ShapeMatcher {
         for(let i = 0; i < this.SUBSTEPS; i++) {
 
             this.predictionPositions();
-
-            // if(this.dragging) {
-            //     this.blitHit();
-            // }
+            this.dragging && this.blitHit();
 
             //shape matching
             //-------------
@@ -733,6 +729,12 @@ export class ShapeMatcher {
 
     }
 
+    updateHitPoint() {
+        this.localHitPoint = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
+        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len();
+        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+    }
+
     handlePointerDown = (e) => {
         this.dragging = true;
         const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
@@ -748,20 +750,15 @@ export class ShapeMatcher {
         const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
         const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
         this.rayCaster.castMouse(this.gl.camera, new Vec2(_x, _y));
-        const point = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-        const dist = new Vec3().sub(point, this.rayCaster.origin).len() * 0.9;
-        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
-
+        this.updateHitPoint();
         this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
-        this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
-        this.solvePositionsProgram.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
+
     }
 
     handlePointerUp = (e) => {
         this.dragging = false;
         this.hitBlitted = false;
-        this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
-        // this.hitPoint.set(999.0, 999.0, 999.0);
+        this.solvePositionsProgram.uniforms['uIsDragging'].value = 0;
     }
 
 

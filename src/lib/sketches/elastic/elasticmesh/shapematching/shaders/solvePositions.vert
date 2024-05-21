@@ -38,6 +38,7 @@ void main() {
     float constraintDist = length(initPosContraintDir);
 //    float r = 0.2 + initRestLength * 0.01;
     float r = mix(0.2, 0.0, uIsDragging) + initRestLength * mix(0.01, 0.5, uIsDragging);
+    r = 0.001;
     if(constraintDist > r) {
         initPosContraintDir /= constraintDist;
         pos += normalize(initPosContraintDir) * (constraintDist - r) * 0.01;
