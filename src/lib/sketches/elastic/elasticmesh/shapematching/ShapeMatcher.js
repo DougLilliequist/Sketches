@@ -6,6 +6,8 @@ import copy from './shaders/copy.glsl?raw';
 
 import sumVert from './shaders/sum.vert?raw';
 import sumFrag from './shaders/sum.frag?raw';
+import reduceVert from './shaders/reduce.vert?raw';
+import reduceFrag from './shaders/reduce.frag?raw';
 import blitDataVert from './shaders/blitData.vert?raw';
 import blitDataFrag from './shaders/blitData.frag?raw';
 
@@ -54,7 +56,7 @@ export class ShapeMatcher {
 
         this.SIZE = Math.pow(2, Math.ceil(Math.log2(Math.ceil(Math.sqrt(position.count)))));
         this.REDUCTION_STEPS = Math.floor(Math.log2(this.SIZE));
-        this.USE_REDUCTIONS = false;
+        this.USE_REDUCTIONS = true;
 
         this.SUBSTEPS = 2;
         this.firstTick = true;
@@ -193,7 +195,7 @@ export class ShapeMatcher {
             //since we are rendering the final result to the previously made buffers
             //no need to make an additional single pixel sized texture
             this.reductions = [];
-            for(let i = this.REDUCTION_STEPS; i > 0; i--) {
+            for(let i = this.REDUCTION_STEPS - 1; i >= 0; i--) {
                 const resolution = Math.pow(2, i);
                 reductionOptions.width = resolution;
                 reductionOptions.height = resolution;
@@ -286,6 +288,17 @@ export class ShapeMatcher {
             },
             depthTest: false,
             depthWrite: false
+        });
+
+        this.reduceProgram = new Program(this.gl, {
+            vertex: bigTriangle,
+            fragment: reduceFrag,
+            uniforms: {
+                tMap: {value: new Texture(this.gl)},
+                uResolution: {value: this.SIZE}
+            },
+            depthTest: false,
+            depthWrite: false,
         });
 
         this.blitMesh = new Mesh(this.gl, {
@@ -511,9 +524,25 @@ export class ShapeMatcher {
             return;
         }
 
-        for(let i = this.reductions.length - 1; i >= 0; i--) {
+        const prevBlitQuadProgram = this.blitQuad.program;
+        this.blitQuad.program = this.reduceProgram;
+
+        let autoClear = this.gl.renderer.autoClear;
+        this.gl.renderer.autoClear = false;
+
+        const reductions = this.reductions.length;
+        for(let i = 0; i < this.reductions.length; i++) {
+
+            let firstPass = i === 0;
+            this.blitQuad.program.uniforms['uResolution'].value = Math.pow(2, reductions - i);
+            this.blitQuad.program.uniforms['tMap'].value = firstPass ? data : this.reductions[i - 1].texture;
+            let _target = i === this.reductions.length - 1 ? target : this.reductions[i]
+            this.gl.renderer.render({scene: this.blitQuad, target: _target})
 
         }
+
+        this.gl.renderer.autoClear = autoClear;
+        this.blitQuad.program = prevBlitQuadProgram;
 
     }
 
@@ -532,23 +561,9 @@ export class ShapeMatcher {
         this.blitMesh.program.uniforms['tInitRelativePositions'].value = q;
         this.gl.renderer.render({scene: this.blitMesh, target})
 
-        if(!this.USE_REDUCTIONS) {
-
-            // const autoClear = this.gl.renderer.autoClear;
-            // this.gl.renderer.autoClear = false;
-
-            this.sum({data: target.textures[0], target: matrixRows[0]})
-            this.sum({data: target.textures[1], target: matrixRows[1]})
-            this.sum({data: target.textures[2], target: matrixRows[2]})
-
-            // this.gl.renderer.autoClear = autoClear;
-
-            return;
-        }
-
-        for(let i = this.reductions.length - 1; i >= 0; i--) {
-
-        }
+        this.sum({data: target.textures[0], target: matrixRows[0]})
+        this.sum({data: target.textures[1], target: matrixRows[1]})
+        this.sum({data: target.textures[2], target: matrixRows[2]})
 
     }
 
@@ -672,6 +687,9 @@ export class ShapeMatcher {
             this.initShapeMatching();
             return;
         }
+
+        // this.initShapeMatching();
+        // return;
         //TODO - test adding the gpu pick inside loop
         for(let i = 0; i < this.SUBSTEPS; i++) {
 

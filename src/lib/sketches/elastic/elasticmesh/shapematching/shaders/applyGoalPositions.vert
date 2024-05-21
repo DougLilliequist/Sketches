@@ -66,8 +66,6 @@ void main() {
     vec3 AC = texelFetch(tAPQAQQInvC, ivec2(0, 0), 0).xyz;
 
     mat3 A = mat3(AA, AB, AC);
-//    float det = determinant(A); //this is A LOT of MADS
-//    A /= pow(det, 1.0 / 3.0);
 
     R = (uBeta * A) + ((1.0 - uBeta) * R);
 
@@ -79,10 +77,7 @@ void main() {
     vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
 
     float compliance = 0.00001 / (uDt * uDt);
-
-//    pos += ((goalPosition - pos) / (1.0 + compliance)) * uAlpha;
     pos += (goalPosition - pos) * uAlpha;
-//    pos += (goalPosition - pos) / (2.0 + compliance);
 
     vPos = pos;
 
