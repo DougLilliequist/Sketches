@@ -1,17 +1,17 @@
 import {Program, RenderTarget, Texture, Vec2, Vec3, Mat4, Vec4, Geometry, Mesh, Triangle} from "ogl";
 
-import vertex from './gpuPick.vert?raw';
-import fragment from './gpuPick.frag?raw';
+import vertex from '../gpuPick.vert?raw';
+import fragment from '../gpuPick.frag?raw';
 
-import triangleIndexDisplayVert from './positionDisplay.vert?raw';
-import triangleIndexDisplayFrag from './positionDisplay.frag?raw';
+import triangleIndexDisplayVert from '../positionDisplay.vert?raw';
+import triangleIndexDisplayFrag from '../positionDisplay.frag?raw';
 
 import triangleListVert from './triangleList.vert?raw';
 import triangleListFrag from './triangleList.frag?raw';
 
 import prevGpuPickVert from './gpuPickprev2.vert?raw'
 
-export class GpuPicker {
+export class GpuPickerprev {
     constructor(gl, {geometry} = {}) {
 
         this.gl = gl;
@@ -154,7 +154,7 @@ export class GpuPicker {
         })
 
         this.gpuPickProgram = new Program(this.gl, {
-            vertex,
+            vertex: prevGpuPickVert,
             fragment,
             uniforms: {
                 tPosition: {value: new Texture(this.gl)},
@@ -198,6 +198,20 @@ export class GpuPicker {
         this.hitData = new Vec4(999, 999, 999, -1);
 
         this.inputPos = new Vec2();
+
+        addEventListener('pointerdown', e => {
+            this.inputPos.x = (e.x * this.gl.canvas.width) / this.gl.canvas.clientWidth
+            this.inputPos.y = this.gl.canvas.height - (e.y * this.gl.canvas.height) / this.gl.canvas.clientHeight - 1
+
+            this.gl.renderer.bindFramebuffer(this.triangleData)
+            let pixels = new Float32Array([0, 0, 0, 0]);
+            this.gl.readPixels(this.inputPos.x, this.inputPos.y, 1, 1, this.gl.RGBA, this.gl.FLOAT, pixels);
+            console.log(pixels);
+            this.gl.renderer.bindFramebuffer();
+
+            this.pickProgram.program.uniforms['uInputPos'].value.copy(this.inputPos);
+        })
+
         addEventListener('pointermove', e => {
             this.inputPos.x = (e.x * this.gl.canvas.width) / this.gl.canvas.clientWidth,
             this.inputPos.y = this.gl.canvas.height - (e.y * this.gl.canvas.height) / this.gl.canvas.clientHeight - 1
@@ -214,6 +228,13 @@ export class GpuPicker {
         this.triangleDisplayMesh.program.uniforms['tPosition'].value = positions;
         this.triangleDisplayMesh.program.uniforms['uSize'].value = size;
         this.gl.renderer.render({scene: this.triangleDisplayMesh, camera: this.gl.camera, target: this.triangleData});
+
+        this.gl.renderer.bindFramebuffer(this.triangleData)
+        let pixels = new Float32Array([0, 0, 0, 0]);
+        this.gl.readPixels(this.inputPos.x, this.inputPos.y, 1, 1, this.gl.RGBA, this.gl.FLOAT, pixels);
+        console.log(pixels);
+        this.gl.renderer.bindFramebuffer();
+
         this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 
         this.objMatrix.inverse(worldMatrix);
@@ -222,13 +243,14 @@ export class GpuPicker {
 
         this.pickProgram.program.uniforms['tPosition'].value = positions;
         this.pickProgram.program.uniforms['tIndex'].value = this.triangleData.texture;
+        this.pickProgram.program.uniforms['uIndex'].value = pixels[0];
         this.pickProgram.program.uniforms['uRayOrigin'].value.copy(this.objRayOrigin);
         this.pickProgram.program.uniforms['uRayDirection'].value.copy(this.objRayDirection);
         this.pickProgram.program.uniforms['uSize'].value = size;
         this.gl.renderer.render({scene: this.pickProgram, target: this.resultBuffer});
 
         this.gl.renderer.bindFramebuffer(this.resultBuffer)
-        let pixels = new Float32Array([0, 0, 0, 0]);
+        pixels = new Float32Array([0, 0, 0, 0]);
         this.gl.readPixels(0, 0, 1, 1, this.gl.RGBA, this.gl.FLOAT, pixels);
         this.gl.renderer.bindFramebuffer();
 

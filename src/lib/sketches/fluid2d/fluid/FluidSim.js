@@ -127,7 +127,7 @@ export default class FluidSim {
                     uStep: {value: stepSize},
                     uDt: {value: dt},
                     uAlpha: {value: -1.0},
-                    uBeta: {value: 0.25}
+                    uBeta: {value: 0.99}
                 },
                 depthTest: false,
                 depthWrite: false,
@@ -272,7 +272,7 @@ export default class FluidSim {
         this.gl.renderer.render({scene: this.copyProgram, target: this.copy});
 
         // diffuse
-        let alpha = 0.0001 * dt;
+        let alpha = 0.9 * dt;
         this.diffuseProgram.program.uniforms.uAlpha.value = alpha;
         this.diffuseProgram.program.uniforms.uBeta.value = 1.0 / (4.0 + alpha);
         for(let i = 0; i < this.iterationCount; i++) {
@@ -298,6 +298,11 @@ export default class FluidSim {
         this.gl.renderer.render({scene: this.addForceProgram, target: this.velocityBuffer.write});
         this.velocityBuffer.swap();
 
+        this.applyBoundsProgram.program.uniforms.tSource.value = this.velocityBuffer.read.texture;
+        this.applyBoundsProgram.program.uniforms.uScalar.value = 0.0;
+        this.gl.renderer.render({scene: this.applyBoundsProgram, target: this.velocityBuffer.write});
+        this.velocityBuffer.swap();
+
         //update density
         this.addForceProgram.program.uniforms.tU.value = this.densityBuffer.read.texture;
         // this.addForceProgram.program.uniforms.uInput.value.set(1.0, 1.0, 1.0);
@@ -315,8 +320,8 @@ export default class FluidSim {
         this.poissonBuffer.swap();
 
         // this.poissonProgram.program.uniforms.uAlpha.value = -(stp * stp);
-        this.poissonProgram.program.uniforms.uAlpha.value = -(1);
-        this.poissonProgram.program.uniforms.uBeta.value = 0.25;
+        // this.poissonProgram.program.uniforms.uAlpha.value = -(1);
+        // this.poissonProgram.program.uniforms.uBeta.value = 0.25;
 
         //perform jacobi iterations to determine pressure
         for(let i = 0; i < this.iterationCount; i++) {
@@ -332,11 +337,6 @@ export default class FluidSim {
         this.clearDivergenceProgram.program.uniforms.tW.value = this.velocityBuffer.read.texture;
         this.clearDivergenceProgram.program.uniforms.tPressure.value = this.poissonBuffer.read.texture
         this.gl.renderer.render({scene: this.clearDivergenceProgram, target: this.velocityBuffer.write});
-        this.velocityBuffer.swap();
-
-        this.applyBoundsProgram.program.uniforms.tSource.value = this.velocityBuffer.read.texture;
-        this.applyBoundsProgram.program.uniforms.uScalar.value = 0.0;
-        this.gl.renderer.render({scene: this.applyBoundsProgram, target: this.velocityBuffer.write});
         this.velocityBuffer.swap();
 
         this.display.program.uniforms.tFluid.value = this.densityBuffer.read.texture;

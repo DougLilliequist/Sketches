@@ -69,8 +69,9 @@ void main() {
     R = (uBeta * A) + ((1.0 - uBeta) * R);
 
     vec3 normal = texelFetch(tInitNormals, iCoord, 0).xyz;
+//    normal.yz = rotate2D(uAngle.y) * normal.yz;
+//    normal.xz = rotate2D(uAngle.x) * normal.xz;
+
     vNormal = R * normal;
-    vNormal.xz = rotate2D(uAngle.x) * vNormal.xz;
-    vNormal.yz = rotate2D(uAngle.y) * vNormal.yz;
 
 }

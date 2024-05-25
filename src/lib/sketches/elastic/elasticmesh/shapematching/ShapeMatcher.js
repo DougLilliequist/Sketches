@@ -6,7 +6,6 @@ import copy from './shaders/copy.glsl?raw';
 
 import sumVert from './shaders/sum.vert?raw';
 import sumFrag from './shaders/sum.frag?raw';
-import reduceVert from './shaders/reduce.vert?raw';
 import reduceFrag from './shaders/reduce.frag?raw';
 import blitDataVert from './shaders/blitData.vert?raw';
 import blitDataFrag from './shaders/blitData.frag?raw';
@@ -66,6 +65,8 @@ export class ShapeMatcher {
         this.hitPoint = new Vec3(999, 999, 999);
         this.localHitPoint = new Vec3(999, 999, 999);
         this.initHitPoint = new Vec3(999, 999 ,999);
+        this.targetTurnAngle = new Vec2(0, 0);
+        this.turnAngle = new Vec2(0, 0);
         this.initAngle = 0;
         this.dragging = false;
         this.hitBlitted = false;
@@ -455,6 +456,7 @@ export class ShapeMatcher {
         });
 
     }
+
     //capture initial center of mass in order to determine the initial relative positions
     //which is required to calculate the AQQ matrix
     initShapeMatching() {
@@ -510,8 +512,6 @@ export class ShapeMatcher {
 
     }
 
-    //render to single point of possible, use reductions otherwise
-    //REMINDER: CLEAR THE ALPHA BEFORE RENDERING TO SINGLE POINT
     sum({data, target} = {}) {
 
         const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
@@ -612,6 +612,8 @@ export class ShapeMatcher {
 
     solvePositions() {
         this.blitMesh.program = this.solvePositionsProgram;
+        this.solvePositionsProgram.uniforms['uAngle'].value.copy(this.turnAngle);
+
         this.blitMesh.program.uniforms['tPositions'].value = this.solvedPositionsBuffer.read.texture;
         this.blitMesh.program.uniforms['tInitPositions'].value = this.initPositions;
         this.blitMesh.program.uniforms['tInitRestLengths'].value = this.restLenghtsBuffer.texture;
@@ -631,6 +633,8 @@ export class ShapeMatcher {
 
     updateNormals() {
         this.blitMesh.program = this.updateNormalsProgram;
+
+        this.updateNormalsProgram.uniforms['uAngle'].value.copy(this.turnAngle);
         this.blitMesh.program.uniforms['tInitNormals'].value = this.initNormals;
         this.blitMesh.program.uniforms['tQuaternion'].value = this.finalRotationAndMatrixBuffer.textures[0];
         this.blitMesh.program.uniforms['tAPQAQQInvA'].value = this.finalRotationAndMatrixBuffer.textures[1];
@@ -690,13 +694,14 @@ export class ShapeMatcher {
             return;
         }
 
-        // this.initShapeMatching();
-        // return;
         //TODO - test adding the gpu pick inside loop
         for(let i = 0; i < this.SUBSTEPS; i++) {
 
-            this.predictionPositions();
             this.dragging && this.blitHit();
+            this.turnAngle.x += (this.targetTurnAngle.x - this.turnAngle.x) * 0.03;
+            this.turnAngle.y += (this.targetTurnAngle.y - this.turnAngle.y) * 0.03;
+
+            this.predictionPositions();
 
             //shape matching
             //-------------
@@ -735,15 +740,14 @@ export class ShapeMatcher {
     get positions() { return this.solvedPositionsBuffer.read.texture;}
     get normals() { return this.normalBuffer.texture;}
 
-    //init GPU picking
     addHandlers() {
 
-        this.hitPoint = new Vec3();
+        this.rayCaster = new Raycast();
+
         this.gpuPicker = new GpuPicker(this.gl, {
             geometry: this.refGeometry
         });
 
-        this.rayCaster = new Raycast();
         addEventListener('pointerdown', this.handlePointerDown)
         addEventListener('pointermove', this.handlePointerMove)
         addEventListener('pointerup', this.handlePointerUp)
@@ -758,18 +762,16 @@ export class ShapeMatcher {
 
     updateHitOrientation() {
 
-
         const initHitDir = this.initHitPoint.clone();
         const currentHitDir = this.hitPoint.clone();
 
         let angleX = currentHitDir.clone().multiply(new Vec3(1.0, 0.0, 1.0)).normalize().angle(initHitDir.clone().multiply(new Vec3(1.0, 0.0, 1.0)).normalize());
         angleX *= Math.sign(currentHitDir.x - initHitDir.x);
+        this.targetTurnAngle.x = angleX;
 
         let angleY = currentHitDir.clone().multiply(new Vec3(0.0, 1.0, 1.0)).normalize().angle(initHitDir.clone().multiply(new Vec3(0.0, 1.0, 1.0)).normalize());
         angleY *= Math.sign(currentHitDir.y - initHitDir.y);
-
-        this.solvePositionsProgram.uniforms['uAngle'].value.set(angleX, angleY);
-        this.updateNormalsProgram.uniforms['uAngle'].value.set(angleX, angleY);
+        this.targetTurnAngle.y = angleY;
 
     }
 
@@ -798,6 +800,9 @@ export class ShapeMatcher {
         this.dragging = false;
         this.hitBlitted = false;
         this.solvePositionsProgram.uniforms['uIsDragging'].value = 0;
+
+        this.targetTurnAngle.set(0, 0);
+
         this.solvePositionsProgram.uniforms['uAngle'].value.set(0, 0);
         this.updateNormalsProgram.uniforms['uAngle'].value.set(0, 0);
 

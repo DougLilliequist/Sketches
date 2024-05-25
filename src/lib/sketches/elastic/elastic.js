@@ -16,7 +16,7 @@ export class elastic {
             width: el.clientWidth,
             height: el.clientHeight,
             antialias: true,
-            dpr: 1
+            dpr: 2
         });
 
         this.gl = this.renderer.gl;
@@ -39,7 +39,7 @@ export class elastic {
 
         this.camera.position.x = 0.0;
         this.camera.position.y = 0.0;
-        this.camera.position.z = 7.0;
+        this.camera.position.z = 8.0;
 
         // this.controls = new Orbit(this.camera, {
         //     target: new Vec3(0, 0.0, 0),

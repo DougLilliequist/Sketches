@@ -39,8 +39,8 @@ void main() {
     vec3 initPos = texelFetch(tInitPositions, iCoord, 0).xyz;
 
     //ROTATE THE INITIAL POSITIONS
+    initPos.yz = rotate2D(uAngle.y * 0.25) * initPos.yz;
     initPos.xz = rotate2D(uAngle.x * 0.75) * initPos.xz;
-    initPos.yz = rotate2D(uAngle.y * 0.75) * initPos.yz;
 
 
     float initRestLength = texelFetch(tInitRestLengths, iCoord, 0).x;
@@ -49,7 +49,7 @@ void main() {
     float constraintDist = length(initPosContraintDir);
 //    float r = 0.2 + initRestLength * 0.01;
 //    float r = mix(0.2, 0.0, uIsDragging) + initRestLength * mix(0.01, 0.5, uIsDragging);
-    float r = mix(0.2, 0.0, uIsDragging) + initRestLength * mix(0.01, 0.05, uIsDragging);
+    float r = mix(0.2, 0.1, uIsDragging) + initRestLength * mix(0.01, 0.05, uIsDragging);
 //    r = 0.001;
     if(constraintDist > r) {
         initPosContraintDir /= constraintDist;
@@ -66,13 +66,8 @@ void main() {
         float dist = length(dir);
         if(dist > pickedRestLength) {
             dir /= dist;
-
             float distPhase = smoothstep(0.0, 1.0, pickedRestLength / 2.0);
-
-//            pos += dir * (dist - pickedRestLength) * exp(-pickedRestLength * pickedRestLength);
-            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 1.5, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength);
-//            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 5.0, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength);
-//            pos += dir * (dist - pickedRestLength) * (1.0 - smoothstep(0.0, 3.0, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength);
+            pos += dir * (dist - pickedRestLength) * ((1.0 - smoothstep(0.0, 1.35, pickedRestLength)) * exp(-pickedRestLength * pickedRestLength)) * 0.1;
         }
     }
 
