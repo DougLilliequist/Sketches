@@ -30,6 +30,11 @@ import calcRestLengthsVert from './shaders/calcRestLengths.vert?raw';
 import calcRestLengthsFrag from './shaders/calcRestLengths.frag?raw';
 import calcPickedRestLengthsVert from './shaders/calcPickedRestLengths.vert?raw';
 import calcPickedRestLengthsFrag from './shaders/calcPickedRestLengths.frag?raw';
+import normalScatterVert from './shaders/normalScatterVert.glsl?raw';
+import normalScatterFrag from './shaders/normalScatterFrag.glsl?raw';
+import normalGatherVert from './shaders/normalGatherVert.glsl?raw';
+import normalGatherFrag from './shaders/normalGatherFrag.glsl?raw';
+import clear from './shaders/clear.glsl?raw';
 
 export class ShapeMatcher {
     constructor(gl, {
@@ -57,7 +62,7 @@ export class ShapeMatcher {
         this.REDUCTION_STEPS = Math.floor(Math.log2(this.SIZE));
         this.USE_REDUCTIONS = true;
 
-        this.SUBSTEPS = 2;
+        this.SUBSTEPS = 1;
         this.firstTick = true;
         this.firstMatrixCalc = true;
         this.dt = 1;
@@ -122,8 +127,29 @@ export class ShapeMatcher {
         }
 
         this.normalBuffer = new RenderTarget(this.gl, options);
-        this.velocityBuffer = new RenderTarget(this.gl, options);
 
+        const normalScatterOptions = Object.assign({}, options);
+        normalScatterOptions.color = 3;
+        normalScatterOptions.width = 256;
+        normalScatterOptions.height = 256;
+
+        this.normalScatterBuffer = new RenderTarget(this.gl, normalScatterOptions);
+
+        const normalGatherBufferOptions = Object.assign({}, options);
+        normalGatherBufferOptions.type = this.gl.HALF_FLOAT;
+        normalGatherBufferOptions.internalFormat = this.gl.RGBA16F;
+
+        this.normalGatherBuffer = {
+            read: new RenderTarget(this.gl, normalGatherBufferOptions),
+            write: new RenderTarget(this.gl, normalGatherBufferOptions),
+            swap: _=> {
+                let tmp = this.normalGatherBuffer.read;
+                this.normalGatherBuffer.read = this.normalGatherBuffer.write;
+                this.normalGatherBuffer.write = tmp;
+            }
+        }
+
+        this.velocityBuffer = new RenderTarget(this.gl, options);
         this.copyBuffer = new RenderTarget(this.gl, options);
 
         const restLengthOptions = Object.assign({}, options);
@@ -293,6 +319,16 @@ export class ShapeMatcher {
             depthWrite: false
         });
 
+        this.clearProgram = new Mesh(this.gl, {
+            geometry: new Triangle(this.gl),
+            program: new Program(this.gl, {
+                vertex: bigTriangle,
+                fragment: clear,
+                depthTest: false,
+                depthWrite: false
+            })
+        });
+
         this.reduceProgram = new Program(this.gl, {
             vertex: bigTriangle,
             fragment: reduceFrag,
@@ -401,13 +437,70 @@ export class ShapeMatcher {
                 tAPQAQQInvB: {value: this.finalRotationAndMatrixBuffer.textures[2]},
                 tAPQAQQInvC: {value: this.finalRotationAndMatrixBuffer.textures[3]},
                 uSize: {value: this.SIZE},
-                uAlpha: {value: 0.0035},
+                // uAlpha: {value: 0.0035},
                 // uAlpha: {value: 0.025}, //mobile
+                uAlpha: {value: 0.01}, //mobile
                 uBeta: {value: 0.5},
                 uDt: {value: 1/120}
             },
             depthTest: false,
             depthWrite: false
+        });
+
+        const triangles = [];
+        const {index} = this.refGeometry.attributes;
+        const indexData = [...index.data];
+
+        for(let i = 0; i < indexData.length / 3; i++) {
+            triangles.push({
+                a: indexData[i * 3],
+                b: indexData[i * 3 + 1],
+                c: indexData[i * 3 + 2],
+            })
+        }
+
+        const triangleListGeometry = new Geometry(this.gl, {
+            position: {
+                size: 3,
+                data: new Float32Array(indexData)
+            }
+        });
+
+        const triangleListBufferSize = Math.pow(2, Math.ceil(Math.log2(Math.ceil(Math.sqrt(triangleListGeometry.attributes.position.count)))));
+        console.log(triangleListBufferSize);
+        this.normalScatterProgram = new Program(this.gl, {
+            vertex: normalScatterVert,
+            fragment: normalScatterFrag,
+            uniforms: {
+                tPosition: {value: this.solvedPositionsBuffer.texture},
+                uPositionTextureSize: {value: this.SIZE},
+                uSize: {value: triangleListBufferSize}
+            },
+            depthTest: false,
+            depthWrite: false
+        })
+
+        this.normalGatherProgram = new Program(this.gl, {
+            vertex: normalGatherVert,
+            fragment: normalGatherFrag,
+            uniforms: {
+                tNormal: {value: this.normalScatterBuffer.textures[0]},
+                tPrev: {value: this.normalGatherBuffer.read.texture},
+                uPositionTextureSize: {value: this.SIZE},
+                uSize: {value: triangleListBufferSize}
+            },
+            depthTest: false,
+            depthWrite: false,
+            transparent: false
+        })
+
+        // this.normalGatherProgram.setBlendFunc(this.gl.ONE, this.gl.ONE, this.gl.ONE, this.gl.ONE);
+        // this.normalGatherProgram.setBlendEquation(this.gl.FUNC_ADD, this.gl.FUNC_ADD);
+
+        this.normalComputeProgram = new Mesh(this.gl, {
+            mode: this.gl.POINTS,
+            geometry: triangleListGeometry,
+            program: this.normalScatterProgram
         });
 
         //and we need to rotate the normals as well
@@ -678,8 +771,32 @@ export class ShapeMatcher {
 
         this.solvePositionsProgram.uniforms['uHitPoint'].value.copy(this.hitPoint);
         this.solvePositionsProgram.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
-        console.log(this.gpuPicker.result.w);
         this.solvePositionsProgram.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
+    }
+
+    updateNormals() {
+        const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
+        this.gl.clearColor(0, 0, 0, 0);
+
+        //start scattering normals
+        this.normalComputeProgram.program = this.normalScatterProgram;
+        this.normalComputeProgram.program.uniforms['tPosition'].value = this.solvedPositionsBuffer.read.texture;
+        this.gl.renderer.render({scene: this.normalComputeProgram, target: this.normalScatterBuffer});
+
+        this.gl.renderer.render({scene: this.clearProgram, target: this.normalGatherBuffer.read})
+        this.normalComputeProgram.program = this.normalGatherProgram;
+        let autoClear = this.gl.renderer.autoClear;
+        this.gl.renderer.autoClear = false;
+
+        for(let i = 0; i < 3; i++) {
+            this.normalComputeProgram.program.uniforms['tNormal'].value = this.normalScatterBuffer.textures[i];
+            this.normalComputeProgram.program.uniforms['tPrev'].value = this.normalGatherBuffer.read.texture;
+            this.gl.renderer.render({scene: this.normalComputeProgram, target: this.normalGatherBuffer.write});
+            this.normalGatherBuffer.swap();
+        }
+
+        this.gl.renderer.autoClear = autoClear;
+        this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
     }
 
     update({time = 0, deltaTime = 0, worldMatrix} = {}) {
@@ -696,6 +813,9 @@ export class ShapeMatcher {
 
         //TODO - test adding the gpu pick inside loop
         for(let i = 0; i < this.SUBSTEPS; i++) {
+
+            let autoClear = this.gl.renderer.autoClear;
+            this.gl.renderer.autoClear = false;
 
             this.dragging && this.blitHit();
             this.turnAngle.x += (this.targetTurnAngle.x - this.turnAngle.x) * 0.03;
@@ -731,14 +851,16 @@ export class ShapeMatcher {
 
             this.solvePositions();
             this.updateVelocity();
-            this.updateNormals();
+            this.gl.renderer.autoClear = autoClear;
 
         }
+
+        this.updateNormals();
 
     }
 
     get positions() { return this.solvedPositionsBuffer.read.texture;}
-    get normals() { return this.normalBuffer.texture;}
+    get normals() { return this.normalGatherBuffer.read.texture;}
 
     addHandlers() {
 

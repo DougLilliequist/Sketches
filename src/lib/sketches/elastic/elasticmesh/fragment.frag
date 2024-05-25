@@ -27,5 +27,5 @@ void main() {
 
     FragColor = vec4(normal*0.5+0.5, 1.0);
     FragColor = vec4(totalLight * col, 1.0);
-//    FragColor = vec4(vec3(fresnel), 1.0);
+//    FragColor = vec4(vec3(light), 1.0);
 }

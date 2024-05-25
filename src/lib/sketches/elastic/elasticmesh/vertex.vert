@@ -38,8 +38,11 @@ void main() {
     vec4 viewPos = viewMatrix * worldPos;
     vViewPos = viewPos.xyz;
 
-    vec3 normal = texelFetch(tNormals, iCoord, 0).xyz;
-    vNormal = normalMatrix * normal;
+//    vec3 normal = texelFetch(tNormals, iCoord, 0).xyz;
+    vec4 normal = texelFetch(tNormals, iCoord, 0);
+    normal.xyz /= normal.w;
+    normal = normalize(normal);
+    vNormal = normalMatrix * normal.xyz;
 
     vUv = uv;
 
