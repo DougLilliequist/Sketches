@@ -26,17 +26,6 @@ void main() {
     gl_Position = vec4(2.0 * coord - 1.0, 0.0, 1.0);
     gl_PointSize = 1.0;
 
-//    if(uPickedIndex < 0.0) {
-//        vRestLength = 10000.0;
-//    } else {
-//        vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
-//
-//        ivec2 pickedCoord = ivec2(calcCoordFromIndex(uPickedIndex, uSize) * uSize);
-//
-//        vec3 target = texelFetch(tPositions, pickedCoord, 0).xyz;
-//        vRestLength = length(target - pos);
-//    }
-
     vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
     vRestLength = length(uHitPoint - pos);
 
