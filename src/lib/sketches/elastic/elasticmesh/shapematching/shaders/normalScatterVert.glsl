@@ -34,15 +34,15 @@ void main() {
     vNormalA.w = position.x;
 
     //calc second normal
-    vA = posC - posB;
-    vB = posA - posB;
-    vNormalB.xyz = normalize(cross(vA, vB));
+    vec3 vC = posC - posB;
+    vec3 vD = posA - posB;
+    vNormalB.xyz = normalize(cross(vC, vD));
     vNormalB.w = position.y;
 
     //calc third normal
-    vA = posA - posC;
-    vB = posB - posC;
-    vNormalC.xyz = normalize(cross(vA, vB));
+    vec3 vE = posA - posC;
+    vec3 vF = posB - posC;
+    vNormalC.xyz = normalize(cross(vE, vF));
     vNormalC.w = position.z;
 
     vec2 coord = calcCoordFromIndex(float(gl_VertexID), uSize);

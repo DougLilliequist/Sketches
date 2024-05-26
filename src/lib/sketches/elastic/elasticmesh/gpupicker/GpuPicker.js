@@ -96,11 +96,7 @@ export class GpuPicker {
             fragment,
             uniforms: {
                 tPosition: {value: new Texture(this.gl)},
-                tIndex: {value: new Texture(this.gl)},
-                uIndex: {value: -1},
                 uInputPos: {value: new Vec2(-1, -1)},
-                uRayDirection: {value: new Vec3(0, 0, -1)},
-                uRayOrigin: {value: new Vec3(0, 0, 0)},
                 uSize: {value: 2}
             }
         });
@@ -156,10 +152,7 @@ export class GpuPicker {
         this.objRayOrigin.copy(rayOrigin).applyMatrix4(this.objMatrix);
         this.objRayDirection.copy(rayDirection).applyMatrix4(this.objMatrix).normalize();
 
-        this.pickProgram.program.uniforms['tPosition'].value = positions;
-        this.pickProgram.program.uniforms['tIndex'].value = this.positionData.texture;
-        this.pickProgram.program.uniforms['uRayOrigin'].value.copy(this.objRayOrigin);
-        this.pickProgram.program.uniforms['uRayDirection'].value.copy(this.objRayDirection);
+        this.pickProgram.program.uniforms['tPosition'].value = this.positionData.texture;
         this.pickProgram.program.uniforms['uSize'].value = size;
         this.gl.renderer.render({scene: this.pickProgram, target: this.resultBuffer});
 

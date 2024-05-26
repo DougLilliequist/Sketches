@@ -7,6 +7,7 @@ uniform sampler2D tPositions;
 uniform sampler2D tInitCenterOfMass;
 
 uniform float uSize;
+uniform float uPointCount;
 
 out float vRestLength;
 
@@ -27,7 +28,7 @@ void main() {
 
     vec3 pos = texelFetch(tPositions, iCoord, 0).xyz;
     vec4 centerOfMass = texelFetch(tInitCenterOfMass, ivec2(0, 0), 0);
-    centerOfMass.xyz /= centerOfMass.w;
+    centerOfMass.xyz /= uPointCount;
 
     vRestLength = length(pos - centerOfMass.xyz);
 //    vRestLength = length(pos);

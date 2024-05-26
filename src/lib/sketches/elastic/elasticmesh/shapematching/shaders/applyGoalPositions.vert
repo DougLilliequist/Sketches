@@ -13,6 +13,7 @@ uniform sampler2D tAPQAQQInvB;
 uniform sampler2D tAPQAQQInvC;
 
 uniform float uSize;
+uniform float uPointCount;
 uniform float uAlpha;
 uniform float uBeta;
 uniform float uDt;
@@ -70,7 +71,7 @@ void main() {
     R = (uBeta * A) + ((1.0 - uBeta) * R);
 
     vec4 centerOfMass = texelFetch(tCenterOfMass, ivec2(0, 0), 0);
-    centerOfMass.xyz /= centerOfMass.w;
+    centerOfMass.xyz /= uPointCount;
     vec3 initRelativePos = texelFetch(tInitRelativePositions, iCoord, 0).xyz;
     vec3 goalPosition = (R * initRelativePos) + centerOfMass.xyz;
 

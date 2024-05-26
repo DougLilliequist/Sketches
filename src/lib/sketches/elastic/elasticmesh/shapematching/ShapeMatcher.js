@@ -62,7 +62,7 @@ export class ShapeMatcher {
         this.REDUCTION_STEPS = Math.floor(Math.log2(this.SIZE));
         this.USE_REDUCTIONS = true;
 
-        this.SUBSTEPS = 1;
+        this.SUBSTEPS = 2;
         this.firstTick = true;
         this.firstMatrixCalc = true;
         this.dt = 1;
@@ -75,6 +75,8 @@ export class ShapeMatcher {
         this.initAngle = 0;
         this.dragging = false;
         this.hitBlitted = false;
+        this.POINT_COUNT = position.count;
+        console.log(this.POINT_COUNT);
 
         this.initBuffers();
         this.initShapeMatchingBuffers();
@@ -130,8 +132,8 @@ export class ShapeMatcher {
 
         const normalScatterOptions = Object.assign({}, options);
         normalScatterOptions.color = 3;
-        normalScatterOptions.width = 256;
-        normalScatterOptions.height = 256;
+        normalScatterOptions.width = 128;
+        normalScatterOptions.height = 128;
 
         this.normalScatterBuffer = new RenderTarget(this.gl, normalScatterOptions);
 
@@ -139,15 +141,7 @@ export class ShapeMatcher {
         normalGatherBufferOptions.type = this.gl.HALF_FLOAT;
         normalGatherBufferOptions.internalFormat = this.gl.RGBA16F;
 
-        this.normalGatherBuffer = {
-            read: new RenderTarget(this.gl, normalGatherBufferOptions),
-            write: new RenderTarget(this.gl, normalGatherBufferOptions),
-            swap: _=> {
-                let tmp = this.normalGatherBuffer.read;
-                this.normalGatherBuffer.read = this.normalGatherBuffer.write;
-                this.normalGatherBuffer.write = tmp;
-            }
-        }
+        this.normalGatherBuffer = new RenderTarget(this.gl, normalGatherBufferOptions);
 
         this.velocityBuffer = new RenderTarget(this.gl, options);
         this.copyBuffer = new RenderTarget(this.gl, options);
@@ -366,6 +360,7 @@ export class ShapeMatcher {
             uniforms: {
                 tPosition: {value: new Texture(this.gl)},
                 tCenterOfMass: {value: new Texture(this.gl)},
+                uPointCount: {value: this.POINT_COUNT},
                 uSize: {value: this.SIZE}
             },
             depthTest: false,
@@ -381,7 +376,7 @@ export class ShapeMatcher {
             },
             depthTest: false,
             depthWrite: false,
-            transparent: true,
+            transparent: !this.USE_REDUCTIONS,
         });
 
         if(!this.USE_REDUCTIONS) {
@@ -437,9 +432,10 @@ export class ShapeMatcher {
                 tAPQAQQInvB: {value: this.finalRotationAndMatrixBuffer.textures[2]},
                 tAPQAQQInvC: {value: this.finalRotationAndMatrixBuffer.textures[3]},
                 uSize: {value: this.SIZE},
-                // uAlpha: {value: 0.0035},
+                uPointCount: {value: this.POINT_COUNT},
+                uAlpha: {value: 0.0035},
                 // uAlpha: {value: 0.025}, //mobile
-                uAlpha: {value: 0.01}, //mobile
+                // uAlpha: {value: 0.01}, //mobile
                 uBeta: {value: 0.5},
                 uDt: {value: 1/120}
             },
@@ -485,17 +481,17 @@ export class ShapeMatcher {
             fragment: normalGatherFrag,
             uniforms: {
                 tNormal: {value: this.normalScatterBuffer.textures[0]},
-                tPrev: {value: this.normalGatherBuffer.read.texture},
+                tPrev: {value: this.normalGatherBuffer.texture},
                 uPositionTextureSize: {value: this.SIZE},
                 uSize: {value: triangleListBufferSize}
             },
             depthTest: false,
             depthWrite: false,
-            transparent: false
+            transparent: true
         })
 
-        // this.normalGatherProgram.setBlendFunc(this.gl.ONE, this.gl.ONE, this.gl.ONE, this.gl.ONE);
-        // this.normalGatherProgram.setBlendEquation(this.gl.FUNC_ADD, this.gl.FUNC_ADD);
+        this.normalGatherProgram.setBlendFunc(this.gl.ONE, this.gl.ONE, this.gl.ONE, this.gl.ONE);
+        this.normalGatherProgram.setBlendEquation(this.gl.FUNC_ADD, this.gl.FUNC_ADD);
 
         this.normalComputeProgram = new Mesh(this.gl, {
             mode: this.gl.POINTS,
@@ -529,6 +525,7 @@ export class ShapeMatcher {
             uniforms: {
                 tPositions: {value: new Texture(this.gl)},
                 tInitCenterOfMass: {value: new Texture(this.gl)},
+                uPointCount: {value: this.POINT_COUNT},
                 uSize: {value: this.SIZE}
             },
             depthTest: false,
@@ -568,6 +565,12 @@ export class ShapeMatcher {
         this.initNormals = this.initPositionNormal.textures[1];
         this.sum({data: this.initPositions, target: this.initCenterOfMassBuffer});
 
+        this.gl.renderer.bindFramebuffer(this.initCenterOfMassBuffer)
+        let pixels = new Float32Array([0, 0, 0, 0]);
+        this.gl.readPixels(0, 0, 1, 1, this.gl.RGBA, this.gl.FLOAT, pixels);
+        this.gl.renderer.bindFramebuffer();
+        console.log(pixels);
+
         const currentProgram = this.blitMesh.program;
         this.blitMesh.program = this.restLengthsProgram;
         this.blitMesh.program.uniforms['tPositions'].value = this.initPositions;
@@ -594,6 +597,19 @@ export class ShapeMatcher {
             ]
         });
 
+        this.generateAPQAQQMatrix({
+            p: this.relativePositionsBuffer.texture,
+            q: this.initRelativePositionsBuffer.texture,
+            target: this.pqBuffer,
+            matrixRows: [
+                this.APQABuffer,
+                this.APQBBuffer,
+                this.APQCBuffer,
+            ]
+        });
+
+        //this.calcRotation();
+
     }
 
     predictionPositions() {
@@ -607,14 +623,14 @@ export class ShapeMatcher {
 
     sum({data, target} = {}) {
 
-        const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
-        this.gl.clearColor(0, 0, 0, 0);
+        // const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
+        // this.gl.clearColor(0, 0, 0, 0);
 
         if(!this.USE_REDUCTIONS) {
 
             this.sumProgram.program.uniforms['tData'].value = data;
             this.gl.renderer.render({scene: this.sumProgram, target});
-            this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+            // this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 
             return;
         }
@@ -622,8 +638,8 @@ export class ShapeMatcher {
         const prevBlitQuadProgram = this.blitQuad.program;
         this.blitQuad.program = this.reduceProgram;
 
-        let autoClear = this.gl.renderer.autoClear;
-        this.gl.renderer.autoClear = false;
+        // let autoClear = this.gl.renderer.autoClear;
+        // this.gl.renderer.autoClear = false;
 
         const reductions = this.reductions.length;
         for(let i = 0; i < this.reductions.length; i++) {
@@ -636,9 +652,9 @@ export class ShapeMatcher {
 
         }
 
-        this.gl.renderer.autoClear = autoClear;
+        // this.gl.renderer.autoClear = autoClear;
         this.blitQuad.program = prevBlitQuadProgram;
-        this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+        // this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 
     }
 
@@ -724,19 +740,6 @@ export class ShapeMatcher {
         this.gl.renderer.render({scene: this.blitMesh, target: this.velocityBuffer});
     }
 
-    updateNormals() {
-        this.blitMesh.program = this.updateNormalsProgram;
-
-        this.updateNormalsProgram.uniforms['uAngle'].value.copy(this.turnAngle);
-        this.blitMesh.program.uniforms['tInitNormals'].value = this.initNormals;
-        this.blitMesh.program.uniforms['tQuaternion'].value = this.finalRotationAndMatrixBuffer.textures[0];
-        this.blitMesh.program.uniforms['tAPQAQQInvA'].value = this.finalRotationAndMatrixBuffer.textures[1];
-        this.blitMesh.program.uniforms['tAPQAQQInvB'].value = this.finalRotationAndMatrixBuffer.textures[2];
-        this.blitMesh.program.uniforms['tAPQAQQInvC'].value = this.finalRotationAndMatrixBuffer.textures[3];
-
-        this.gl.renderer.render({scene: this.blitMesh, target: this.normalBuffer});
-    }
-
     blitHit() {
         if(this.hitBlitted) return;
         this.hitBlitted = true;
@@ -783,16 +786,15 @@ export class ShapeMatcher {
         this.normalComputeProgram.program.uniforms['tPosition'].value = this.solvedPositionsBuffer.read.texture;
         this.gl.renderer.render({scene: this.normalComputeProgram, target: this.normalScatterBuffer});
 
-        this.gl.renderer.render({scene: this.clearProgram, target: this.normalGatherBuffer.read})
+        this.gl.renderer.render({scene: this.clearProgram, target: this.normalGatherBuffer})
         this.normalComputeProgram.program = this.normalGatherProgram;
+
         let autoClear = this.gl.renderer.autoClear;
         this.gl.renderer.autoClear = false;
 
         for(let i = 0; i < 3; i++) {
             this.normalComputeProgram.program.uniforms['tNormal'].value = this.normalScatterBuffer.textures[i];
-            this.normalComputeProgram.program.uniforms['tPrev'].value = this.normalGatherBuffer.read.texture;
-            this.gl.renderer.render({scene: this.normalComputeProgram, target: this.normalGatherBuffer.write});
-            this.normalGatherBuffer.swap();
+            this.gl.renderer.render({scene: this.normalComputeProgram, target: this.normalGatherBuffer});
         }
 
         this.gl.renderer.autoClear = autoClear;
@@ -852,15 +854,12 @@ export class ShapeMatcher {
             this.solvePositions();
             this.updateVelocity();
             this.gl.renderer.autoClear = autoClear;
-
         }
-
         this.updateNormals();
-
     }
 
     get positions() { return this.solvedPositionsBuffer.read.texture;}
-    get normals() { return this.normalGatherBuffer.read.texture;}
+    get normals() { return this.normalGatherBuffer.texture;}
 
     addHandlers() {
 

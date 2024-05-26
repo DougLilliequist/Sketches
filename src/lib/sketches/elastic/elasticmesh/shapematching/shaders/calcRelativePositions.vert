@@ -6,6 +6,7 @@ in vec3 position;
 uniform sampler2D tPosition;
 uniform sampler2D tCenterOfMass;
 uniform float uSize;
+uniform float uPointCount;
 
 out vec3 vRelativePos;
 
@@ -26,7 +27,7 @@ void main() {
 
     vec3 pos = texelFetch(tPosition, iCoord, 0).xyz;
     vec4 centerOfMass = texelFetch(tCenterOfMass, ivec2(0, 0), 0);
-    centerOfMass.xyz /= centerOfMass.w;
+    centerOfMass.xyz /= uPointCount;
 
     vRelativePos = pos - centerOfMass.xyz;
 
