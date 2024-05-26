@@ -132,8 +132,6 @@ void main() {
     mat3 aqqInv = inverse(AqqMatrix);
 
     //based on following paper: https://matthias-research.github.io/pages/publications/stablePolarDecomp.pdf
-    //credits to Mathias Müller Et. Al
-
     mat3 A = ApqMatrix; //for convinicence and following along the papers method
     vec4 q = mix(texelFetch(tPrevRotation, ivec2(0.0), 0), normalize(mat3ToQuat(aqqInv)), uInitMatrix);
 
