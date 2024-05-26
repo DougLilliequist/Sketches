@@ -211,6 +211,7 @@ export class ShapeMatcher {
         this.initCenterOfMassBuffer =  new RenderTarget(this.gl, singlePixelOptions);
         this.centerOfMassBuffer = new RenderTarget(this.gl, singlePixelOptions);
 
+        //TODO: - make reduction into MRT (will also need to make a new shader)
         //fuck off iOS...(can't use 32-bit float buffers and additively blend...)
         if(this.USE_REDUCTIONS) {
             const reductionOptions = Object.assign({}, options);
