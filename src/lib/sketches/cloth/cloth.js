@@ -1,8 +1,7 @@
-import {Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
-import {ElasticMesh} from "$lib/sketches/elastic/elasticmesh/ElasticMesh.js";
-import {Renderer} from '../../../ogl/src/core/Renderer.js';
+import {Renderer, Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
+import ClothMesh from "$lib/sketches/cloth/clothmesh/clothMesh.js";
 
-export class elastic {
+export class cloth {
     constructor({el}) {
 
         this.init({el});
@@ -16,11 +15,11 @@ export class elastic {
             width: el.clientWidth,
             height: el.clientHeight,
             antialias: true,
-            dpr: 2
+            dpr: 1
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.0;
+        const bg = 0.93;
         this.gl.clearColor(bg,bg,bg, 1.0);
 
         const {
@@ -35,20 +34,20 @@ export class elastic {
             aspect: clientWidth / clientHeight
         });
 
-        this.gl.camera = this.camera;
-
         this.camera.position.x = 0.0;
         this.camera.position.y = 0.0;
-        this.camera.position.z = 8.0;
+        this.camera.position.z = 5.0;
 
-        // this.controls = new Orbit(this.camera, {
-        //     target: new Vec3(0, 0.0, 0),
-        // });
+        this.controls = new Orbit(this.camera, {
+            target: new Vec3(0, 0.0, 0),
+        });
+
         this.scene = new Transform();
 
-        this.elastic = new ElasticMesh(this.gl);
-        this.elastic.setParent(this.scene);
-        // this.elastic.position.y -= 0.2;
+        this.clothMesh = new ClothMesh(this.gl, {
+            resolution: new Vec2(256, 256)
+        });
+        this.clothMesh.setParent(this.scene);
 
     }
 
@@ -67,12 +66,12 @@ export class elastic {
 
     update({
         time,
-        deltaTime
+        deltaTime,
+        userInput
     }) {
 
-        // this.controls.update();
-
-        this.elastic?.update?.({time, deltaTime});
+        this.controls.update();
+        this.clothMesh.update({time});
 
         this.render({
             scene: this.scene,

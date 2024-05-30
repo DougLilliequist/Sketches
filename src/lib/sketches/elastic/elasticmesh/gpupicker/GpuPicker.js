@@ -136,6 +136,13 @@ export class GpuPicker {
 
         })
 
+        addEventListener('resize', _=> {
+            if(this.resizeDebounce) clearTimeout(this.resizeDebounce);
+            this.resizeDebounce = setTimeout(_=> {
+                this.positionData.setSize(this.gl.canvas.width, this.gl.canvas.height);
+            }, 500)
+        })
+
     }
 
     pick({positions, rayOrigin, rayDirection, size, worldMatrix} = {}) {
@@ -161,6 +168,7 @@ export class GpuPicker {
         this.gl.readPixels(0, 0, 1, 1, this.gl.RGBA, this.gl.FLOAT, pixels);
         this.gl.renderer.bindFramebuffer();
         this.hitData.fromArray(pixels);
+        console.log(pixels);
     }
 
     get result() { return this.hitData; }

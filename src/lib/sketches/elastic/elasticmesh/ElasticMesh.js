@@ -29,7 +29,7 @@ export class ElasticMesh extends Transform {
 
     async init() {
         this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/elastic/assets/douglas_bust_reduce.glb');
-        //this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/elastic/assets/head.glb');
+        // this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/elastic/assets/head.glb');
         const {scene} = this.gltf;
         const {children} = scene[0];
 

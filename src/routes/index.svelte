@@ -20,4 +20,5 @@
     <li><a href="/gameoflife">game of life</a><li>
     <li><a href="/ssaopost">ssao</a><li>
     <li><a href="/elastic">elastic</a><li>
+    <li><a href="/cloth">cloth</a><li>
 </ul>

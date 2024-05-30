@@ -41,13 +41,6 @@ export class ShapeMatcher {
         geometry = null
     } = {}) {
 
-        /**
-         * TODO:
-         * - once I'm able to see the head fall down to floor and have
-         * shape matching applied...
-         *  - Build GPU picker
-         */
-
         if(!geometry) {
             console.error('no geometry supplied');
             return;
@@ -76,7 +69,6 @@ export class ShapeMatcher {
         this.dragging = false;
         this.hitBlitted = false;
         this.POINT_COUNT = position.count;
-        console.log(this.POINT_COUNT);
 
         this.initBuffers();
         this.initShapeMatchingBuffers();
@@ -464,7 +456,6 @@ export class ShapeMatcher {
         });
 
         const triangleListBufferSize = Math.pow(2, Math.ceil(Math.log2(Math.ceil(Math.sqrt(triangleListGeometry.attributes.position.count)))));
-        console.log(triangleListBufferSize);
         this.normalScatterProgram = new Program(this.gl, {
             vertex: normalScatterVert,
             fragment: normalScatterFrag,
@@ -817,8 +808,8 @@ export class ShapeMatcher {
         //TODO - test adding the gpu pick inside loop
         for(let i = 0; i < this.SUBSTEPS; i++) {
 
-            let autoClear = this.gl.renderer.autoClear;
-            this.gl.renderer.autoClear = false;
+            // let autoClear = this.gl.renderer.autoClear;
+            // this.gl.renderer.autoClear = false;
 
             this.dragging && this.blitHit();
             this.turnAngle.x += (this.targetTurnAngle.x - this.turnAngle.x) * 0.03;
@@ -854,7 +845,7 @@ export class ShapeMatcher {
 
             this.solvePositions();
             this.updateVelocity();
-            this.gl.renderer.autoClear = autoClear;
+            // this.gl.renderer.autoClear = autoClear;
         }
         this.updateNormals();
     }
