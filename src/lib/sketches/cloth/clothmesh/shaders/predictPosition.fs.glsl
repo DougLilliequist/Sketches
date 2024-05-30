@@ -6,8 +6,8 @@ uniform sampler2D tVelocity;
 uniform sampler2D tNormal;
 
 uniform float uDeltaTime;
-uniform float uApplyInput;
-uniform vec3 uInputPos;
+uniform float uIsDragging;
+uniform vec3 uHitPoint;
 
 uniform vec2 uTexelSize;
 
@@ -160,15 +160,15 @@ void main() {
     vec3 vel = texture(tVelocity, vUv).xyz;
     vec3 normal = texture(tNormal, vUv).xyz;
 
-    if(uApplyInput > 0.0) {
+    if(uIsDragging > 0.0) {
 
         if(vUv.x < uTexelSize.x && vUv.y < uTexelSize.y) {
-            //pos.xyz = uInputPos;
+            //pos.xyz = uHitPoint;
         }
 
     }
 
-    vec3 curlNoiseForce = curlNoise((pos.xyz *0.237) + uTime * 0.174) * 1.0;
+    vec3 curlNoiseForce = curlNoise((pos.xyz *0.537) + uTime * 0.174) * 1.0;
     curlNoiseForce = normal * clamp(dot(normal, normalize(curlNoiseForce)), 0.0, 1.0);
     vel += curlNoiseForce * uDeltaTime;
 
@@ -198,8 +198,9 @@ void main() {
 
         vec3 dir = pos.xyz - (windSources[i] * R);
         float dist = length(dir);
-        float strength = (dist - R) * 0.03 * (1.0 / (dist + 0.001)) * smoothstep(-R, 0.0, dist);
-        strength *= dot(normal, normalize(dir)) * 0.5 + 0.5;
+        float strength = (dist - R) * 0.1 * (1.0 / (dist + 0.001)) * smoothstep(-R, 0.0, dist);
+//        strength *= dot(normal, normalize(dir)) * 0.5 + 0.5;
+        strength *= clamp(dot(normal, normalize(dir)), 0.0, 1.0);
 
         vel -= dir * strength * uDeltaTime;
 

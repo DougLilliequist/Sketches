@@ -20,6 +20,7 @@ void main() {
 
     vec3 prevPos = texture(tPrevPosition, vUv).xyz;
     vec3 vel = (pos - prevPos) / uDeltaTime;
+//    vel *= 0.9997;
     FragColor = vec4(vel, 1.0);
 
 }

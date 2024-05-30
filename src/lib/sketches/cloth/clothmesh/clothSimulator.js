@@ -1,28 +1,43 @@
-import {RenderTarget, Plane, Program, Texture, Mesh, Vec2, Vec3, Triangle} from "ogl";
+import {RenderTarget, Plane, Program, Texture, Mesh, Vec2, Vec3, Triangle, Raycast, Mat4} from "ogl";
 
 import screenQuad from './shaders/screenQuad.vs.glsl?raw';
 import copyDataFS from './shaders/copyData.fs.glsl?raw';
 import predictPosition from './shaders/predictPosition.fs.glsl?raw';
-import constrainCollide from './shaders/constrainCollide.fs.glsl?raw';
+import solvePositions from './shaders/solvePositions.glsl?raw';
 import updateVelocity from './shaders/updateVelocity.fs.glsl?raw';
 import computeNormals from './shaders/computeNormals.fs.glsl?raw';
 import restLength from './shaders/restLength.fs.glsl?raw';
 import restLengthDiagonal from './shaders/diagonalRestLength.fs.glsl?raw';
+import {GpuPicker} from "$lib/sketches/cloth/clothmesh/gpupicker/GpuPicker.js";
+import calcPickedRestLengthsVert
+    from "./shaders/calcPickedRestLengths.vert?raw";
+import calcPickedRestLengthsFrag
+    from "./shaders/calcPickedRestLengths.frag?raw";
 
 export default class ClothSimulator {
-    constructor(gl, {resolution = new Vec2(64, 64), geometry} = {}) {
+    constructor(gl, {resolution = new Vec2(64, 64), geometry, camera} = {}) {
         this.gl = gl;
+        this.camera = camera;
+
         this.refGeo = geometry;
         this.firstRender = true;
         this.segmentCount = new Vec2().copy(resolution);
-        this.subStepCount = 3.0;
+        this.subStepCount = 5.0;
         const dt = 1/120
         this.deltaTime = dt;
         this.restLength = new Vec2((1.0/this.segmentCount.x) * 1.0, (1.0/this.segmentCount.y) * 1.0);
         this.diagonalRestLength = this.restLength.len();
 
+        this.worldMatrix = new Mat4().identity();
+        this.hitPoint = new Vec3(999, 999, 999);
+        this.localHitPoint = new Vec3(999, 999, 999);
+        this.initHitPoint = new Vec3(999, 999 ,999);
+        this.dragging = false;
+        this.hitBlitted = false;
+
         this.initTextures();
         this.initPrograms();
+        this.addHandlers();
     }
 
     initTextures() {
@@ -83,7 +98,6 @@ export default class ClothSimulator {
             height: this.segmentCount.y,
             type: this.gl.FLOAT,
             format: this.gl.RGBA,
-            // internalFormat: this.gl.renderer.isWebgl2 ? (type === this.gl.FLOAT ? this.gl.RGBA32F : this.gl.RGBA16F) : this.gl.RGBA,
             internalFormat: this.gl.RGBA32F,
             minFilter: this.gl.NEAREST,
             depth: false,
@@ -92,11 +106,12 @@ export default class ClothSimulator {
 
         this.positionBuffer = new RenderTarget(this.gl, options);
         this.prevPositionBuffer = new RenderTarget(this.gl, options);
-        this.iterationBuffer = new RenderTarget(this.gl, options);
+        this.solvedPositionBuffer = new RenderTarget(this.gl, options);
         this.velocityBuffer = new RenderTarget(this.gl, options);
         this.normalsBuffer = new RenderTarget(this.gl, options);
         this.restLengths = new RenderTarget(this.gl, options);
         this.restLengthsDiagonal = new RenderTarget(this.gl, options);
+        this.pickedRestLengthsBuffer = new RenderTarget(this.gl, options);
         this.copyBuffer = new RenderTarget(this.gl, options);
 
     }
@@ -137,8 +152,8 @@ export default class ClothSimulator {
                 tNormal: {value: this.normalsBuffer.texture},
                 uDeltaTime: {value: this.deltaTime / this.subStepCount},
                 uTexelSize: {value: new Vec2(1.0 / this.segmentCount.x, 1.0/this.segmentCount.y)},
-                uApplyInput: {value: 0.0},
-                uInputPos: {value: new Vec3(0, 0,0)}
+                uIsDragging: {value: 0.0},
+                uHitPoint: {value: new Vec3(0, 0,0)}
             },
 
         });
@@ -155,11 +170,12 @@ export default class ClothSimulator {
 
         this.copyDataProgram = new Mesh(this.gl, {geometry, program: copyDataShader});
 
-        const constrainCollideShader = new Program(this.gl, {
+        const solvePositionsShader = new Program(this.gl, {
             vertex: screenQuad,
-            fragment: constrainCollide,
+            fragment: solvePositions,
             uniforms: {
                 tPosition: {value: null},
+                tPickedRestLengths: {value: new Texture(this.gl)},
                 tRestLength: {value: new Texture(this.gl)},
                 tRestLengthDiagonal: {value: new Texture(this.gl)},
                 uRestLength: {value: this.restLength},
@@ -167,13 +183,14 @@ export default class ClothSimulator {
                 uStiffness: {value: 0.5},
                 uTexelSize: {value: new Vec2(1.0 / this.segmentCount.x, 1.0/this.segmentCount.y)},
                 uDeltaTime: {value: this.deltaTime / this.subStepCount},
-                uApplyInput: {value: 0.0},
-                uInputPos: {value: new Vec3(0.0, 0.0, 0.0)},
+                uPickedIndex: {value: -1},
+                uIsDragging: {value: 0.0},
+                uHitPoint: {value: new Vec3(0.0, 0.0, 0.0)},
                 uConstrainDiagonal: {value: 0.0}
             },
         });
 
-        this.constrainCollideProgram = new Mesh(this.gl, {geometry, program: constrainCollideShader});
+        this.solvePositionsProgram = new Mesh(this.gl, {geometry, program: solvePositionsShader});
 
         const updateVelocityShader = new Program(this.gl, {
             vertex: screenQuad,
@@ -200,19 +217,38 @@ export default class ClothSimulator {
 
         this.normalsProgram = new Mesh(this.gl, {geometry, program: normalsShader});
 
+        const pickedRestLengthsShader = new Program(this.gl, {
+            vertex: calcPickedRestLengthsVert,
+            fragment: calcPickedRestLengthsFrag,
+            uniforms: {
+                tPositions: {value: new Texture(this.gl)},
+                uPickedIndex: {value: -1.0},
+                uHitPoint: {value: new Vec3(999, 999, 999)},
+                uSize: {value: 256}
+            },
+            depthTest: false,
+            depthWrite: false
+        });
+
+        this.calcPickedRestLengthsProgram = new Mesh(this.gl, {
+            mode: this.gl.POINTS,
+            geometry: this.refGeo,
+            program: pickedRestLengthsShader
+        });
+
     }
 
     preWarm() {
         this.copyDataProgram.program.uniforms.tData.value = this.initPosition;
-        this.gl.renderer.render({scene: this.copyDataProgram, target: this.iterationBuffer});
+        this.gl.renderer.render({scene: this.copyDataProgram, target: this.solvedPositionBuffer});
 
-        this.restlengthProgram.program.uniforms.tPosition.value = this.iterationBuffer.texture;
-        this.restlengthDiagonalProgram.program.uniforms.tPosition.value = this.iterationBuffer.texture;
+        this.restlengthProgram.program.uniforms.tPosition.value = this.solvedPositionBuffer.texture;
+        this.restlengthDiagonalProgram.program.uniforms.tPosition.value = this.solvedPositionBuffer.texture;
         this.gl.renderer.render({scene: this.restlengthProgram, target: this.restLengths});
         this.gl.renderer.render({scene: this.restlengthDiagonalProgram, target: this.restLengthsDiagonal});
 
-        this.constrainCollideProgram.program.uniforms.tRestLength.value = this.restLengths.texture;
-        this.constrainCollideProgram.program.uniforms.tRestLengthDiagonal.value = this.restLengthsDiagonal.texture;
+        this.solvePositionsProgram.program.uniforms.tRestLength.value = this.restLengths.texture;
+        this.solvePositionsProgram.program.uniforms.tRestLengthDiagonal.value = this.restLengthsDiagonal.texture;
 
         this.copyDataProgram.program.uniforms.tData.value = this.initVelocity;
         this.gl.renderer.render({scene: this.copyDataProgram, target: this.velocityBuffer});
@@ -222,27 +258,58 @@ export default class ClothSimulator {
 
         this.predictPositionProgram.program.uniforms.tVelocity.value = this.velocityBuffer.texture;
         this.predictPositionProgram.program.uniforms.tNormal.value = this.normalsBuffer.texture;
-        this.predictPositionProgram.program.uniforms.tPosition.value = this.iterationBuffer.texture;
+        this.predictPositionProgram.program.uniforms.tPosition.value = this.solvedPositionBuffer.texture;
         this.predictPositionProgram.program.uniforms.uTime.value = time * 0.001;
-        // this.predictPositionProgram.program.uniforms.uInputPos.value.copy(inputPos || new Vec2(999, 999));
-        // this.predictPositionProgram.program.uniforms.uApplyInput.value = interacting ? 1.0 : 0.0;
+        // this.predictPositionProgram.program.uniforms.uHitPoint.value.copy(inputPos || new Vec2(999, 999));
+        // this.predictPositionProgram.program.uniforms.uIsDragging.value = interacting ? 1.0 : 0.0;
         this.gl.renderer.render({scene: this.predictPositionProgram, target: this.positionBuffer});
 
     }
 
+    blitHit() {
+        if(this.hitBlitted) return;
+        this.hitBlitted = true;
+
+        this.copyDataProgram.program.uniforms.tData.value = this.solvedPositionBuffer.texture;
+        this.gl.renderer.render({scene: this.copyDataProgram, target: this.copyBuffer});
+
+        this.gpuPicker.pick({
+            positions: this.copyBuffer.texture,
+            rayOrigin: this.rayCaster.origin,
+            rayDirection: this.rayCaster.direction,
+            size: this.segmentCount.x,
+            worldMatrix: this.worldMatrix,
+            camera: this.camera
+        });
+
+        if(this.gpuPicker.result.w < 0) return;
+        this.updateHitPoint();
+        this.initHitPoint = this.hitPoint.clone();
+
+        this.calcPickedRestLengthsProgram.program.uniforms['uHitPoint'].value.copy(this.hitPoint);
+        this.calcPickedRestLengthsProgram.program.uniforms['tPositions'].value = this.copyBuffer.texture;
+        this.calcPickedRestLengthsProgram.program.uniforms['uPickedIndex'].value = this.gpuPicker.result.w;
+        this.gl.renderer.render({scene: this.calcPickedRestLengthsProgram, target: this.pickedRestLengthsBuffer});
+
+        this.solvePositionsProgram.program.uniforms['uHitPoint'].value.copy(this.hitPoint);
+        this.solvePositionsProgram.program.uniforms['uIsDragging'].value = this.dragging ? 1 : 0;
+        this.solvePositionsProgram.program.uniforms['uPickedIndex'].value = this.dragging ? this.gpuPicker.result.w : - 1;
+    }
+
     solveConstraints({positions, inputPos, interacting, direction}) {
 
-        this.constrainCollideProgram.program.uniforms.tPosition.value = positions?.texture;
-        // this.constrainCollideProgram.program.uniforms.uInputPos.value.copy(inputPos);
-        // this.constrainCollideProgram.program.uniforms.uApplyInput.value = interacting ? 1.0 : 0.0;
-        this.constrainCollideProgram.program.uniforms.uConstrainDiagonal.value = direction;
-        this.gl.renderer.render({scene: this.constrainCollideProgram, target: this.iterationBuffer});
+        this.solvePositionsProgram.program.uniforms.tPosition.value = positions?.texture;
+        // this.solvePositionsProgram.program.uniforms.uHitPoint.value.copy(inputPos);
+        // this.solvePositionsProgram.program.uniforms.uIsDragging.value = interacting ? 1.0 : 0.0;
+        this.solvePositionsProgram.program.uniforms.tPickedRestLengths.value = this.pickedRestLengthsBuffer.texture;
+        this.solvePositionsProgram.program.uniforms.uConstrainDiagonal.value = direction;
+        this.gl.renderer.render({scene: this.solvePositionsProgram, target: this.solvedPositionBuffer});
 
     }
 
     updateVelocity() {
 
-        this.updateVelocityProgram.program.uniforms.tPosition.value = this.iterationBuffer.texture;
+        this.updateVelocityProgram.program.uniforms.tPosition.value = this.solvedPositionBuffer.texture;
         this.updateVelocityProgram.program.uniforms.tPrevPosition.value = this.prevPositionBuffer.texture;
         this.gl.renderer.render({scene: this.updateVelocityProgram, target: this.velocityBuffer});
 
@@ -250,7 +317,7 @@ export default class ClothSimulator {
 
     computeNormals() {
 
-        this.normalsProgram.program.uniforms.tPosition.value = this.iterationBuffer.texture;
+        this.normalsProgram.program.uniforms.tPosition.value = this.solvedPositionBuffer.texture;
         this.gl.renderer.render({scene: this.normalsProgram, target: this.normalsBuffer});
 
     }
@@ -264,15 +331,62 @@ export default class ClothSimulator {
             return;
         }
 
+        this.dragging && this.blitHit();
         //save previous position
         for(let i = 0; i < this.subStepCount; i++) {
-            this.copyDataProgram.program.uniforms.tData.value = this.iterationBuffer.texture;
+            this.copyDataProgram.program.uniforms.tData.value = this.solvedPositionBuffer.texture;
             this.gl.renderer.render({scene: this.copyDataProgram, target: this.prevPositionBuffer});
-        this.predictPositions({time, inputPos, interacting});
-        this.solveConstraints({positions: this.positionBuffer, inputPos, interacting, direction: 0});
-        this.updateVelocity();
+            this.predictPositions({time, inputPos, interacting});
+            this.solveConstraints({positions: this.positionBuffer, inputPos, interacting, direction: 0});
+            this.updateVelocity();
         }
         this.computeNormals();
+    }
+
+    updateHitPoint(scale = 1) {
+        this.localHitPoint = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
+        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len();
+        this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
+    }
+
+    addHandlers() {
+
+        this.rayCaster = new Raycast();
+
+        this.gpuPicker = new GpuPicker(this.gl, {
+            geometry: this.refGeo
+        });
+
+        addEventListener('pointerdown', this.handlePointerDown)
+        addEventListener('pointermove', this.handlePointerMove)
+        addEventListener('pointerup', this.handlePointerUp)
+
+    }
+
+    handlePointerDown = (e) => {
+        this.dragging = true;
+        const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
+        const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
+        this.rayCaster.castMouse(this.camera, new Vec2(_x, _y));
+    }
+
+    handlePointerMove = (e) => {
+        if(!this.dragging) return;
+        if(this.gpuPicker.result.w < 0.0) return;
+
+        const _x = 2.0 * (e.x / window.innerWidth) - 1.0;
+        const _y = 2.0 * (1.0 - (e.y / window.innerHeight)) - 1.0;
+        this.rayCaster.castMouse(this.camera, new Vec2(_x, _y));
+
+        this.updateHitPoint();
+        this.solvePositionsProgram.program.uniforms['uHitPoint'].value.copy(this.hitPoint);
+
+    }
+
+    handlePointerUp = (e) => {
+        this.dragging = false;
+        this.hitBlitted = false;
+        this.solvePositionsProgram.program.uniforms['uIsDragging'].value = 0;
     }
 
     createDataTexture({data, size}) {
@@ -295,11 +409,15 @@ export default class ClothSimulator {
     }
 
     get position() {
-        return this.iterationBuffer.texture;
+        return this.solvedPositionBuffer.texture;
     }
 
     get normals() {
         return this.normalsBuffer.texture;
     }
+
+    // get restLengths() {
+    //     return this.pickedRestLengthsBuffer.texture
+    // }
 
 }

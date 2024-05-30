@@ -758,7 +758,7 @@ export class ShapeMatcher {
         const currentProgram = this.blitMesh.program;
         this.blitMesh.program = this.pickedRestLengthsProgram;
 
-        this.blitMesh.program.uniforms['uHitPoint'].value.copy(this.localHitPoint);
+        this.blitMesh.program.uniforms['uHitPoint'].value.copy(this.hitPoint);
         this.blitMesh.program.uniforms['tPositions'].value = this.copyBuffer.texture;
         this.blitMesh.program.uniforms['uPickedIndex'].value = this.gpuPicker.result.w;
         this.gl.renderer.render({scene: this.blitMesh, target: this.pickedRestLengthsBuffer});

@@ -19,7 +19,7 @@ export class cloth {
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.93;
+        const bg = 0.0;
         this.gl.clearColor(bg,bg,bg, 1.0);
 
         const {
@@ -45,7 +45,8 @@ export class cloth {
         this.scene = new Transform();
 
         this.clothMesh = new ClothMesh(this.gl, {
-            resolution: new Vec2(256, 256)
+            resolution: new Vec2(256, 256),
+            camera: this.camera
         });
         this.clothMesh.setParent(this.scene);
 
@@ -70,7 +71,7 @@ export class cloth {
         userInput
     }) {
 
-        this.controls.update();
+        // this.controls.update();
         this.clothMesh.update({time});
 
         this.render({
