@@ -66,16 +66,9 @@ void main() {
 
     vec3 finalNormal = mix(box, normal, 0.2);
 
-    //vec3 perturbNorm = perturbNormals(normal, box, 0.9);
-//    vec3 finalNormal = mix(fin);
-
-
-    //TODO: MAKE SURE THE PHASE IS THE SAME ONE USED IN THE SHADOW SHADER
-    float phase =  uv.x * 4.0 * (1.0 - uv.x);
-    //float radius = uRadius * mix(0.5, 1.0, data.x);
+    float phase =  uv.x * 4.0 * (1.0 - uv.x) * mix(0.8, 1.0, data.x);
     float radius = uRadius;
     pos = segmentPos + (normal * radius * phase);
-//    pos = segmentPos + (finalNormal * radius);
 
     vec4 mPos = modelMatrix * vec4(pos, 1.0);
     vec4 mvPos = viewMatrix * mPos;

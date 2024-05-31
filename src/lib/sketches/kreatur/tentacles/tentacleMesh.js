@@ -174,7 +174,7 @@ export default class TentacleMesh extends Mesh {
                     value: tentacleColors
                 },
                 uShadowTexelSize: {
-                    value: 1.0/1024
+                    value: 1.0/2048
                 },
                 uTime: {
                     value: 0
