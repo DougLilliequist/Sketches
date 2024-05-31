@@ -1,5 +1,5 @@
-import {Mesh, Vec3, Box, Program, Transform, Geometry, Vec2, Texture, GLTFLoader} from 'ogl';
-// import {GLTFLoader} from '../../../ogl/src/extras/GLTFLoader.js';
+import {Mesh, Vec3, Box, Program, Transform, Geometry, Vec2, Texture} from 'ogl';
+import {GLTFLoader} from '../../../ogl/src/extras/GLTFLoader.js';
 
 import vertex from './matrixMesh.vert?raw';
 import fragment from './matrixMesh.frag?raw';

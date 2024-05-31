@@ -20,8 +20,7 @@ void main() {
     vec4 pos = texelFetch(tPosition, iCoord, 0);
     vec3 normal = texelFetch(tNormal, iCoord, 0).xyz;
 
-    // float compliance = 0.1/ (uDeltaTime + uDeltaTime);
-    float compliance = 0.01/ (uDeltaTime + uDeltaTime);
+    float compliance = 0.5/ (uDeltaTime + uDeltaTime);
     if(uIsDragging > 0.5 && uPickedIndex > -1.0) {
         float pickedRestLen = texelFetch(tPickedRestLengths, iCoord, 0).x;
         vec3 dir = uHitPoint - pos.xyz;

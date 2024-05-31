@@ -20,8 +20,8 @@ void main() {
     vec4 pos = texelFetch(tPosition, iCoord, 0);
     vec3 normal = texelFetch(tNormal, iCoord, 0).xyz;
 
-    // float compliance = 0.1/ (uDeltaTime + uDeltaTime);
-    float compliance = 0.01/ (uDeltaTime + uDeltaTime);
+    // float compliance = 0.5/ (uDeltaTime + uDeltaTime);
+    float compliance = 0.25/ (uDeltaTime + uDeltaTime);
     if(uIsDragging > 0.5 && uPickedIndex > -1.0) {
         float pickedRestLen = texelFetch(tPickedRestLengths, iCoord, 0).x;
         vec3 dir = uHitPoint - pos.xyz;
@@ -30,9 +30,9 @@ void main() {
             dir /= dist;
             float d = (clamp(dot(dir, normal), 0.0, 1.0) + clamp(dot(dir, -normal), 0.0, 1.0));
             float mass = mix(2.0, 1.0, smoothstep(0.29, 3.0, exp(-pickedRestLen * pickedRestLen)));
-            float k = smoothstep(0.1, 0.0, pickedRestLen);
+            float k = 1.0 / (mass + compliance);
             // pos.xyz += dir * (dist - pickedRestLen) * k * mix(0.1, 1.0, d) * 0.05;
-            pos.xyz += dir * (dist - pickedRestLen) * k * 0.05;
+            pos.xyz += dir * (dist - pickedRestLen) * k * 0.01;
         }
 
     }

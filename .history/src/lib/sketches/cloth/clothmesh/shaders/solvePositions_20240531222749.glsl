@@ -56,7 +56,7 @@ void main() {
     bool isTop = vUv.y < 1.0 - uTexelSize.y;
     bool isBottom = vUv.y > uTexelSize.y;
 
-    // float compliance = (0.0001 / (uDeltaTime * uDeltaTime));
+    // float compliance = (0.000001 / (uDeltaTime * uDeltaTime));
     float compliance = (0.000001 / (uDeltaTime * uDeltaTime));
     float k = 1.0 / (2.0 + compliance);
 
@@ -65,7 +65,8 @@ void main() {
     if(isTop) applyConstraint(pos.xyz, tPos, delta,  restLength.z, k);
     if(isBottom) applyConstraint(pos.xyz, bPos, delta,  restLength.w, k);
 
-    pos.xyz += delta * (1.0 / 10.0);
+    // pos.xyz += delta * (1.0 / 20.0);
+    pos.xyz += delta * 0.25;
 
     FragColor = pos;
 

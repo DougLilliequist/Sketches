@@ -23,7 +23,7 @@ export default class ClothSimulator {
         this.refGeo = geometry;
         this.firstRender = true;
         this.segmentCount = new Vec2().copy(resolution);
-        this.subStepCount = 5.0 // 6;
+        this.subStepCount = 4.0 // 6;
         const dt = 1/120
         this.deltaTime = dt;
         this.restLength = new Vec2((1.0/this.segmentCount.x) * 1.0, (1.0/this.segmentCount.y) * 1.0);
@@ -375,7 +375,7 @@ export default class ClothSimulator {
             this.gl.renderer.render({scene: this.copyDataProgram, target: this.copyBuffer});
             this.solvePullConstraints({positions: this.copyBuffer, normals: this.normalsBuffer});
 
-            for(let j = 0; j < 10; j++) {
+            for(let j = 0; j < 15; j++) {
                 this.copyDataProgram.program.uniforms.tData.value = this.solvedPositionBuffer.texture;
                 this.gl.renderer.render({scene: this.copyDataProgram, target: this.copyBuffer});
                 this.solveConstraints({positions: this.copyBuffer, inputPos, interacting, direction: 0});

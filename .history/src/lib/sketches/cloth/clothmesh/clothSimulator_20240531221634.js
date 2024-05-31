@@ -23,7 +23,7 @@ export default class ClothSimulator {
         this.refGeo = geometry;
         this.firstRender = true;
         this.segmentCount = new Vec2().copy(resolution);
-        this.subStepCount = 5.0 // 6;
+        this.subStepCount = 8.0 // 6;
         const dt = 1/120
         this.deltaTime = dt;
         this.restLength = new Vec2((1.0/this.segmentCount.x) * 1.0, (1.0/this.segmentCount.y) * 1.0);

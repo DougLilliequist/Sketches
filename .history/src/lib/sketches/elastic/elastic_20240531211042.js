@@ -1,5 +1,6 @@
-import {Camera, Transform, Orbit, Vec3, Vec2, Renderer} from 'ogl';
+import {Camera, Transform, Orbit, Vec3, Vec2} from 'ogl';
 import {ElasticMesh} from "$lib/sketches/elastic/elasticmesh/ElasticMesh.js";
+import {Renderer} from '../../../ogl/src/core/Renderer.js';
 
 export class elastic {
     constructor({el}) {

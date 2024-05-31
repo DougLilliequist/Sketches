@@ -56,8 +56,8 @@ void main() {
     bool isTop = vUv.y < 1.0 - uTexelSize.y;
     bool isBottom = vUv.y > uTexelSize.y;
 
-    // float compliance = (0.0001 / (uDeltaTime * uDeltaTime));
-    float compliance = (0.000001 / (uDeltaTime * uDeltaTime));
+    // float compliance = (0.000001 / (uDeltaTime * uDeltaTime));
+    float compliance = (0.0 / (uDeltaTime * uDeltaTime));
     float k = 1.0 / (2.0 + compliance);
 
     if(isLeft) applyConstraint(pos.xyz, lPos, delta, restLength.x, k);

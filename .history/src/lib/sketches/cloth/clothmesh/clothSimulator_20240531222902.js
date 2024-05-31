@@ -375,7 +375,7 @@ export default class ClothSimulator {
             this.gl.renderer.render({scene: this.copyDataProgram, target: this.copyBuffer});
             this.solvePullConstraints({positions: this.copyBuffer, normals: this.normalsBuffer});
 
-            for(let j = 0; j < 10; j++) {
+            for(let j = 0; j < 20; j++) {
                 this.copyDataProgram.program.uniforms.tData.value = this.solvedPositionBuffer.texture;
                 this.gl.renderer.render({scene: this.copyDataProgram, target: this.copyBuffer});
                 this.solveConstraints({positions: this.copyBuffer, inputPos, interacting, direction: 0});
