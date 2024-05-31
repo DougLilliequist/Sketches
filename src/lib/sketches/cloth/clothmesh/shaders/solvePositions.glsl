@@ -32,14 +32,17 @@ void applyConstraint(in vec3 pos, in vec3 otherPos, inout vec3 delta, in float r
 void main() {
 
     ivec2 iCoord = ivec2(gl_FragCoord.xy);
-    vec4 pos = texture(tPosition, vUv);
+
+    vec4 pos = texelFetch(tPosition, iCoord, 0);
+    vec4 restLength = texelFetch(tRestLength, iCoord, 0);
 
     float dist = length(pos);
-    if(dist > 4.0) {
-        pos.xyz += normalize(vec3(0.0) - pos.xyz) * (dist - 4.0);
-    }
-
-    vec4 restLength = texture(tRestLength, vUv);
+    float R = 5.0;
+    bool oobX = abs(pos.x) > R;
+    bool oobY = abs(pos.y) > R;
+    bool oobZ = abs(pos.z) > R;
+//    if(dist > R) {  pos.xyz += normalize(vec3(0.0) - pos.xyz) * (dist - R) * 0.001; }
+    if(oobX || oobY || oobZ) {  pos.xyz += normalize(vec3(0.0) - pos.xyz) * (dist - R) * 0.0001; }
 
     vec3 delta = vec3(0.0);
 
@@ -53,24 +56,15 @@ void main() {
     bool isTop = vUv.y < 1.0 - uTexelSize.y;
     bool isBottom = vUv.y > uTexelSize.y;
 
-    if(isLeft) applyConstraint(pos.xyz, lPos, delta, restLength.x, 0.5);
-    if(isRight) applyConstraint(pos.xyz, rPos, delta,  restLength.y, 0.5);
-    if(isTop) applyConstraint(pos.xyz, tPos, delta,  restLength.z, 0.5);
-    if(isBottom) applyConstraint(pos.xyz, bPos, delta,  restLength.w, 0.5);
+    float compliance = (0.0001 / (uDeltaTime * uDeltaTime));
+    float k = 1.0 / (2.0 + compliance);
 
+    if(isLeft) applyConstraint(pos.xyz, lPos, delta, restLength.x, k);
+    if(isRight) applyConstraint(pos.xyz, rPos, delta,  restLength.y, k);
+    if(isTop) applyConstraint(pos.xyz, tPos, delta,  restLength.z, k);
+    if(isBottom) applyConstraint(pos.xyz, bPos, delta,  restLength.w, k);
 
-    pos.xyz += delta * 0.25;
-
-    if(uIsDragging > 0.5 && uPickedIndex > -1.0) {
-
-        float pickedRestLen = texelFetch(tPickedRestLengths, iCoord, 0).x;
-        vec3 dir = uHitPoint - pos.xyz;
-        float dist = length(dir);
-        if(dist > pickedRestLen) {
-            pos.xyz += (dir / dist) * (dist - pickedRestLen) * exp(-pickedRestLen * pickedRestLen) * 0.00005;
-        }
-
-    }
+    pos.xyz += delta * (1.0 / 10.0);
 
     FragColor = pos;
 

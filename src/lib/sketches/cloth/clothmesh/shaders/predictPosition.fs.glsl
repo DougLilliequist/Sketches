@@ -8,6 +8,7 @@ uniform sampler2D tNormal;
 uniform float uDeltaTime;
 uniform float uIsDragging;
 uniform vec3 uHitPoint;
+uniform vec3 uInitSeed;
 
 uniform vec2 uTexelSize;
 
@@ -154,23 +155,24 @@ vec3 curlNoise( vec3 p ){
 
 }
 
+vec3 applySurfaceForce(vec3 dir, vec3 normal) {
+    float nDotA = clamp(dot(dir, normal), 0.0, 1.0);
+    float nDotB = clamp(dot(dir, -normal), 0.0, 1.0);
+    return (normal * nDotA + -normal * nDotB);
+}
+
 void main() {
 
     vec4 pos = texture(tPosition, vUv);
     vec3 vel = texture(tVelocity, vUv).xyz;
     vec3 normal = texture(tNormal, vUv).xyz;
 
-    if(uIsDragging > 0.0) {
+    vec3 curlNoiseForce = curlNoise((pos.xyz *0.537) + (uInitSeed - 0.5) + uTime * 0.183);
+    vec3 curlNoiseDir = normalize(curlNoiseForce);
+    curlNoiseForce = applySurfaceForce(curlNoiseForce, normal);
 
-        if(vUv.x < uTexelSize.x && vUv.y < uTexelSize.y) {
-            //pos.xyz = uHitPoint;
-        }
-
-    }
-
-    vec3 curlNoiseForce = curlNoise((pos.xyz *0.537) + uTime * 0.174) * 1.0;
-    curlNoiseForce = normal * clamp(dot(normal, normalize(curlNoiseForce)), 0.0, 1.0);
-    vel += curlNoiseForce * uDeltaTime;
+    vel += curlNoiseForce * 2.1 * uDeltaTime;
+    vel -= pos.xyz * 0.5 * smoothstep(0.0, 5.0, length(pos.xyz)) * uDeltaTime;
 
     vec3 windSources[14] = vec3[14](
         vec3(1.0, 0.0, 0.0),
@@ -193,27 +195,19 @@ void main() {
 
     );
 
-    float R = 2.0;
+    float R = 5.0;
+    float denom = 1.0 / 14.0;
     for(int i = 0; i < 14; i++) {
 
-        vec3 dir = pos.xyz - (windSources[i] * R);
+        vec3 dir = (windSources[i] * R) - pos.xyz;
         float dist = length(dir);
-        float strength = (dist - R) * 0.1 * (1.0 / (dist + 0.001)) * smoothstep(-R, 0.0, dist);
-//        strength *= dot(normal, normalize(dir)) * 0.5 + 0.5;
-        strength *= clamp(dot(normal, normalize(dir)), 0.0, 1.0);
-
-        vel -= dir * strength * uDeltaTime;
+        dir /= dist;
+        float strength = max(0.0, (dist - R)) * 0.001 * smoothstep(R - 1.0, R, dist);
+        vel += applySurfaceForce(dir, normal) * strength * uDeltaTime * denom;
 
     }
 
     pos.xyz += vel * uDeltaTime;
-
-    if(vUv.y < 1.0 - uTexelSize.y) {
-
-//        vel += g;
-//        pos.xyz += vel * uDeltaTime;
-
-    }
 
     FragColor = pos;
 

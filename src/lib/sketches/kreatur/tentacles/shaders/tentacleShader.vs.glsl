@@ -70,6 +70,7 @@ void main() {
 //    vec3 finalNormal = mix(fin);
 
 
+    //TODO: MAKE SURE THE PHASE IS THE SAME ONE USED IN THE SHADOW SHADER
     float phase =  uv.x * 4.0 * (1.0 - uv.x);
     //float radius = uRadius * mix(0.5, 1.0, data.x);
     float radius = uRadius;

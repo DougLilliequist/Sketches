@@ -1,10 +1,10 @@
 <script>
-    
+
     import { onMount, tick } from 'svelte';
     import {cloth} from '$lib/sketches/cloth/cloth.js';
-    
+
     //--------------------------------
-            
+
     let el;
     let canvas;
     let sketch;
@@ -15,17 +15,17 @@
     let time = 0;
     let deltaTime = 0;
     let prevTime = 0;
-    
+
     //--------------------------------
-    
+
     onMount(async()=> {
-        
+
         await tick();
 
         sketch = new cloth({el: canvas});
 
         handleTick();
-            
+
     });
 
     const updateClock = () => {
@@ -46,22 +46,26 @@
     const handleResize = () => {
         sketch.onresize({width: containerWidth, height: containerHeight})
     }
-    
+
 </script>
 
 <svelte:window on:resize={handleResize} />
-    
+
 <main class=sketch bind:this={el} bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
     <canvas class=webgl-canvas bind:this={canvas}></canvas>
 </main>
-    
+
 <style lang=scss>
-    
+
     .sketch {
             position: absolute;
             min-width: 100vw;
             min-height: 100vh;
             overflow: hidden;
+            cursor: grab;
+            &:active {
+              cursor: grabbing;
+            }
     }
 
     .webgl-canvas {
@@ -73,5 +77,5 @@
             margin: 0;
             border: 0px;
     }
-    
+
 </style>

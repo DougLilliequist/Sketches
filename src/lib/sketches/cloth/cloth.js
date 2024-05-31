@@ -19,7 +19,7 @@ export class cloth {
         });
 
         this.gl = this.renderer.gl;
-        const bg = 0.0;
+        const bg = 0.93;
         this.gl.clearColor(bg,bg,bg, 1.0);
 
         const {
@@ -72,7 +72,7 @@ export class cloth {
     }) {
 
         // this.controls.update();
-        this.clothMesh.update({time});
+        this.clothMesh.update({time, deltaTime});
 
         this.render({
             scene: this.scene,
