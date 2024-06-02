@@ -5,11 +5,13 @@
     "dev": "svelte-kit dev --host -p 8999",
     "build": "svelte-kit build",
     "createsketch": "sh sketchboilerplate.sh",
-    "preview": "svelte-kit preview --host -p 8999"
+    "preview": "svelte-kit preview --host -p 8999",
+    "deploy": "gh-pages -d build"
   },
   "devDependencies": {
     "@sveltejs/adapter-netlify": "^1.0.0-next.17",
     "@sveltejs/kit": "^1.0.0-next.125",
+    "gh-pages": "^6.1.1",
     "sass": "^1.35.1",
     "svelte": "^3.34.0",
     "svelte-preprocess": "^4.7.3",
