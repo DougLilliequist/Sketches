@@ -44,7 +44,7 @@
     }
 
     const handleResize = () => {
-        sketch.onresize({width: containerWidth, height: containerHeight})
+        sketch.onResize({width: containerWidth, height: containerHeight})
     }
     
 </script>
