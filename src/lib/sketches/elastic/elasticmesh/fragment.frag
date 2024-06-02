@@ -15,6 +15,9 @@ void main() {
 
     vec2 uv = vUv;
     vec3 normal = normalize(vNormal);
+
+    if(!gl_FrontFacing) normal = -normal;
+
     uv.y = 1.0 - uv.y;
     vec3 col = texture(tMap, uv).xyz;
     vec3 lightPos = vec3(0.0, 0.0, 5.0);
