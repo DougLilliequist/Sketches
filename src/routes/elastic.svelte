@@ -62,6 +62,10 @@
             min-width: 100vw;
             min-height: 100vh;
             overflow: hidden;
+            cursor: grab;
+            &:active {
+                cursor: grabbing;
+            }
     }
 
     .webgl-canvas {
