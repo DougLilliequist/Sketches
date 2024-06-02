@@ -8,17 +8,6 @@ export class ElasticMesh extends Transform {
     constructor(gl) {
         super();
 
-        /**
-         * NEXT STEPS:
-         * Init Shape matcher
-         * Perform the initial blit in shape matcher
-         * Use the positions and normals from shape matcher as uniforms
-         * Check if head is being properly rendered
-         *
-         * ...expect to cry a little while battling guilty conscious of cross reference the code I wrote at AT
-         *
-         */
-
         this.gl = gl;
         this.baseMesh = null;
         this.shapeMatcher = null;
@@ -28,7 +17,8 @@ export class ElasticMesh extends Transform {
     }
 
     async init() {
-        this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/elastic/assets/douglas_bust_reduce.glb');
+        // this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/elastic/assets/douglas_bust_reduce.glb');
+        this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/elastic/assets/einsteinhead.glb');
         // this.gltf = await GLTFLoader.load(this.gl, 'src/lib/sketches/elastic/assets/head.glb');
         const {scene} = this.gltf;
         const {children} = scene[0];

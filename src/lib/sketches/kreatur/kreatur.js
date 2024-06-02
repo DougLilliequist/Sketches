@@ -123,7 +123,7 @@ export class kreatur {
 
     }
 
-    onResize(width, height) {
+    onResize({width, height}) {
         if (width && height) {
             this.renderer.setSize(width, height);
             const {

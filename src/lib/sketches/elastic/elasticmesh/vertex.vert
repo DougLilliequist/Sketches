@@ -42,7 +42,7 @@ void main() {
     vec4 normal = texelFetch(tNormals, iCoord, 0);
     normal.xyz /= normal.w;
     normal = normalize(normal);
-    vNormal = normalMatrix * normal.xyz;
+    vNormal = normal.xyz;
 
     vUv = uv;
 

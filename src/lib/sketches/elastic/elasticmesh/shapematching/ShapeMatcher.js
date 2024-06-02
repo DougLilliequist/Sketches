@@ -124,8 +124,8 @@ export class ShapeMatcher {
 
         const normalScatterOptions = Object.assign({}, options);
         normalScatterOptions.color = 3;
-        normalScatterOptions.width = 128;
-        normalScatterOptions.height = 128;
+        normalScatterOptions.width = 256;
+        normalScatterOptions.height = 256;
 
         this.normalScatterBuffer = new RenderTarget(this.gl, normalScatterOptions);
 
@@ -869,7 +869,7 @@ export class ShapeMatcher {
 
     updateHitPoint(scale = 1) {
         this.localHitPoint = new Vec3(this.gpuPicker.result.x, this.gpuPicker.result.y, this.gpuPicker.result.z);
-        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len();
+        const dist = new Vec3().sub(this.localHitPoint, this.rayCaster.origin).len() * 0.98;
         this.hitPoint = this.rayCaster.direction.clone().multiply(dist).add(this.rayCaster.origin);
     }
 
