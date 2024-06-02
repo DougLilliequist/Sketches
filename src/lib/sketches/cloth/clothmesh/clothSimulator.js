@@ -306,8 +306,8 @@ export default class ClothSimulator {
         this.updateHitPoint();
         this.initHitPoint = this.hitPoint.clone();
 
-        this.calcPickedRestLengthsProgram.program.uniforms['uHitPoint'].value.copy(this.hitPoint);
-        this.calcPickedRestLengthsProgram.program.uniforms['tPositions'].value = this.copyBuffer.texture;
+        this.calcPickedRestLengthsProgram.program.uniforms['uHitPoint'].value.copy(this.localHitPoint);
+        this.calcPickedRestLengthsProgram.program.uniforms['tPositions'].value = this.solvedPositionBuffer.texture;
         this.calcPickedRestLengthsProgram.program.uniforms['uPickedIndex'].value = this.gpuPicker.result.w;
         this.gl.renderer.render({scene: this.calcPickedRestLengthsProgram, target: this.pickedRestLengthsBuffer});
 

@@ -168,7 +168,6 @@ export class GpuPicker {
         this.gl.readPixels(0, 0, 1, 1, this.gl.RGBA, this.gl.FLOAT, pixels);
         this.gl.renderer.bindFramebuffer();
         this.hitData.fromArray(pixels);
-        console.log(pixels);
     }
 
     get result() { return this.hitData; }
