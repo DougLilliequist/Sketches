@@ -1,0 +1,1 @@
+!function(){"use strict";const t=t=>{const{segments:s}=t;let e=[];return s.forEach(((t,s)=>{e[s]=(t=>{let s=0;return t.forEach((t=>{s+=t*t})),Math.sqrt(s)})(t.timbre)})),e};onmessage=s=>{const e=t(s.data);postMessage(e)}}();
