@@ -1,18 +1,4 @@
-import {
-    Plane
-} from '../../vendors/ogl/src/extras/Plane';
-import {
-    Program
-} from '../../Vendors/ogl/src/core/Program';
-import {
-    Texture
-} from '../../Vendors/ogl/src/core/Texture';
-import {
-    Mesh
-} from '../../Vendors/ogl/src/core/Mesh';
-import {
-    Vec2
-} from '../../Vendors/ogl/src/math/Vec2';
+import {Plane, Program, Texture, Mesh, Vec2} from 'ogl';
 
 const vert = require("./shader/quad.vert");
 const frag = require("./shader/quad.frag");
